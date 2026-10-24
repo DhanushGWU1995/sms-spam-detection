@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+anaconda_projects/
+__pycache__/
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+.venv/
+venv/
+
+Code/artifacts/*.pkl
+!Code/artifacts/logreg_model.pkl
+!Code/artifacts/vectorizer.pkl
+Code/artifacts/*.pt
+Code/artifacts/distilbert/
