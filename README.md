@@ -70,7 +70,7 @@ pip install -r Code/requirements.txt
 streamlit run Code/app_deploy.py
 ```
 
-The app classifies a pasted SMS with the logistic regression model. Run the notebook once so those artifact files exist.
+The app scores one pasted SMS with logistic regression, the GRU, and DistilBERT, side by side. Run the notebook once so all three artifact files exist. Logistic regression is already saved. The GRU and DistilBERT appear after those notebook cells run.
 
 `RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` at the top of the modeling section can be set to `False` to skip a stage.
 

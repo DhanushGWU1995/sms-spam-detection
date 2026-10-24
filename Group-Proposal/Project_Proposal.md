@@ -31,7 +31,7 @@ The spam threshold for each model is selected on the validation set by spam F1. 
 
 ## Demo
 
-`Code/app_deploy.py` is a Streamlit app. After the notebook saves the vectorizer and logistic regression model, the app preprocesses a pasted SMS and returns spam or ham, plus the spam probability.
+`Code/app_deploy.py` is a Streamlit app. After the notebook saves all three models, the app scores one pasted SMS with logistic regression, the GRU, and DistilBERT, and shows each spam probability.
 
 ## Deliverables
 

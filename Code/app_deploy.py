@@ -1,19 +1,10 @@
-import json
 import os
 import sys
-import time
 
-import joblib
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from preprocess import preprocess_text
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARTIFACT_DIR = os.path.join(BASE_DIR, "artifacts")
-VECTORIZER_PATH = os.path.join(ARTIFACT_DIR, "vectorizer.pkl")
-MODEL_PATH = os.path.join(ARTIFACT_DIR, "logreg_model.pkl")
-THRESHOLD_PATH = os.path.join(ARTIFACT_DIR, "threshold.json")
+from inference import load_distilbert, load_gru, load_logreg, score_message
 
 st.set_page_config(
     page_title="SMS Spam Filter",
@@ -45,13 +36,13 @@ st.markdown(
         background-color: #003c1d;
         padding: 16px;
         border-radius: 10px;
-        margin-top: 20px;
+        margin-top: 12px;
     }
     .flash-fail {
         background-color: #3c001a;
         padding: 16px;
         border-radius: 10px;
-        margin-top: 20px;
+        margin-top: 12px;
     }
     .sample-card {
         background-color: #031b3f;
@@ -72,35 +63,28 @@ st.markdown(
 
 
 @st.cache_resource
-def load_model_and_vectorizer():
-    model = joblib.load(MODEL_PATH)
-    vectorizer = joblib.load(VECTORIZER_PATH)
-    threshold = 0.5
-    if os.path.exists(THRESHOLD_PATH):
-        with open(THRESHOLD_PATH, encoding="utf-8") as handle:
-            threshold = float(json.load(handle).get("logreg", 0.5))
-    return model, vectorizer, threshold
+def load_models():
+    return load_logreg(), load_gru(), load_distilbert()
 
 
 st.markdown("<h1 style='text-align: center;'>SMS Spam Filter</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align: center; color:#caf0f8;'>"
-    "Paste a text message to classify it as spam or ham."
+    "Paste a text message. Logistic regression, the GRU, and DistilBERT each return a spam decision."
     "</p>",
     unsafe_allow_html=True,
 )
 
-if not (os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH)):
+logreg, gru, distilbert = load_models()
+if logreg is None and gru is None and distilbert is None:
     st.error(
-        "Model files are not in Code/artifacts yet. "
-        "Open Code/main.ipynb and run it once to train the logistic regression baseline."
+        "No saved models are in Code/artifacts yet. "
+        "Open Code/main.ipynb and run it once, then restart this app."
     )
     st.stop()
 
-model, vectorizer, threshold = load_model_and_vectorizer()
-
 st.markdown("#### Text message")
-message = st.text_area(" ", height=220)
+message = st.text_area("Message", height=220, label_visibility="collapsed")
 
 st.markdown("### Example messages")
 col1, col2 = st.columns(2)
@@ -134,14 +118,28 @@ if st.button("Predict"):
     if not message.strip():
         st.warning("Paste an SMS first.")
     else:
-        features = vectorizer.transform([preprocess_text(message)])
-        spam_probability = float(model.predict_proba(features)[0, 1])
-        is_spam = spam_probability >= threshold
-        flash_class = "flash-fail" if is_spam else "flash-success"
-        label = "Spam detected" if is_spam else "Message looks safe"
-        st.markdown(
-            f'<div class="{flash_class}"><h3 style="text-align:center;">{label}</h3></div>',
-            unsafe_allow_html=True,
-        )
-        st.write(f"Spam probability: {spam_probability:.1%} (threshold {threshold:.2f})")
-        time.sleep(1)
+        outcomes = score_message(message, logreg, gru, distilbert)
+        cards = st.columns(3)
+        for column, outcome in zip(cards, outcomes):
+            with column:
+                st.markdown(f"#### {outcome['name']}")
+                st.caption(outcome["role"])
+                if not outcome["ready"]:
+                    st.info(outcome["detail"])
+                    continue
+                flash = "flash-fail" if outcome["spam"] else "flash-success"
+                label = "Spam detected" if outcome["spam"] else "Message looks safe"
+                st.markdown(
+                    f'<div class="{flash}"><h3 style="text-align:center;">{label}</h3></div>',
+                    unsafe_allow_html=True,
+                )
+                st.write(f"Spam probability: {outcome['probability']:.1%}")
+                st.write(f"Threshold: {outcome['threshold']:.2f}")
+        ready = [item for item in outcomes if item["ready"]]
+        if len(ready) > 1:
+            labels = {item["spam"] for item in ready}
+            if len(labels) > 1:
+                st.warning("The models disagree on this message.")
+            else:
+                decision = "spam" if ready[0]["spam"] else "ham"
+                st.success(f"All trained models agree: {decision}.")
