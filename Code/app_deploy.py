@@ -70,7 +70,7 @@ def load_models():
 st.markdown("<h1 style='text-align: center;'>SMS Spam Filter</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align: center; color:#caf0f8;'>"
-    "Paste a text message. Logistic regression, the GRU, and DistilBERT each return a spam decision."
+    "Paste a text. We show logistic regression, the GRU, and DistilBERT on the same message."
     "</p>",
     unsafe_allow_html=True,
 )

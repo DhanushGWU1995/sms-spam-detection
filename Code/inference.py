@@ -1,6 +1,6 @@
-"""Load the three saved SMS models and score one message.
+"""Load the saved models and score one SMS.
 
-The logistic regression and the GRU see cleaned text. DistilBERT sees the raw message.
+Logistic regression and the GRU use the cleaned text. DistilBERT uses the raw text.
 """
 
 import json
@@ -157,5 +157,5 @@ def _missing(name, role):
         "name": name,
         "role": role,
         "ready": False,
-        "detail": "Run Code/main.ipynb so this model is saved, then restart the app.",
+        "detail": "This model is not saved yet. Run the notebook, then restart the app.",
     }

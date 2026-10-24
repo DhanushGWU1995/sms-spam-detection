@@ -1,53 +1,43 @@
 # SMS Spam Classifier
 
-Binary text classifier that labels an SMS as **spam** or **ham** (legitimate). The project is organized like a course repository: one training notebook, a Streamlit demo, and separate folders for the proposal, the final report, and the presentation.
+Course project: classify an SMS as spam or ham (a normal message).
 
-## Project overview
+We train three models on the same split of the UCI SMS Spam Collection, then explain the predictions with LIME and SHAP.
 
-Spam texts are short, informal, and often obfuscated (`fr33`, short codes, currency amounts). The notebook trains three models on the same split so the comparison is fair:
+1. TF-IDF + logistic regression (baseline)
+2. GRU in PyTorch (RNN)
+3. Fine-tuned DistilBERT (transformer)
 
-1. **TF-IDF + logistic regression** — classical baseline
-2. **GRU in PyTorch** — recurrent network
-3. **Fine-tuned DistilBERT** — transformer
-4. **LIME and SHAP** — local and global explanations on a shared set of messages
-
-Spam is the positive class. The headline metrics are spam precision, recall, F1, and PR-AUC. Accuracy is reported too, and it is a weak summary on this dataset because about 87% of messages are ham.
+Spam is the positive class. About 87% of the messages are ham, so accuracy by itself is misleading. We compare spam precision, recall, F1, and PR-AUC.
 
 ## Dataset
 
-- **File**: `Code/sms_spam.csv`
-- **Source**: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)
-- **Size**: 5,574 messages — 4,827 ham (86.6%) and 747 spam (13.4%)
-- **Columns**:
-  - `Category`: `ham` or `spam`
-  - `Text`: raw message
+- File: `Code/sms_spam.csv`
+- Source: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)
+- 5,574 messages: 4,827 ham (86.6%) and 747 spam (13.4%)
+- Columns: `Category` (`ham` or `spam`) and `Text`
 
-The original download is `sms+spam+collection.zip` in the repository root. `Code/sms_spam.csv` is the working copy. The notebook drops duplicate message text before the stratified 80/10/10 split.
+`sms+spam+collection.zip` is the original download. The notebook uses the csv. Duplicate texts are removed before the 80/10/10 split.
 
-Cite the collection as Almeida, Gómez Hidalgo, and Yamakami, “Contributions to the Study of SMS Spam Filtering,” ACM Symposium on Document Engineering, 2011.
+Please cite Almeida, Gómez Hidalgo, and Yamakami, "Contributions to the Study of SMS Spam Filtering," ACM DocEng 2011.
 
-## Repository layout
+## Layout
 
 ```
-README.md
-.devcontainer/devcontainer.json
-sms+spam+collection.zip
-Code/
-  main.ipynb
-  app_deploy.py
-  preprocess.py
-  requirements.txt
-  sms_spam.csv
-  artifacts/            # models and metrics, created by the notebook
+Code/main.ipynb          training, plots, LIME, SHAP
+Code/app_deploy.py       streamlit demo
+Code/preprocess.py       text cleaning shared by the linear model, the GRU, and the app
+Code/inference.py        loads the saved models for the app
+Code/sms_spam.csv
+Code/artifacts/          created when the notebook is run
 Group-Proposal/
 Final-Group-Presentation/
 Final-Group-Project-Report/
 ```
 
-## Requirements
+## Setup
 
-- Python 3.10+
-- Packages in `Code/requirements.txt`
+Python 3.10 or newer.
 
 ```bash
 pip install -r Code/requirements.txt
@@ -55,7 +45,9 @@ pip install -r Code/requirements.txt
 
 ## How to run
 
-1. Train and evaluate from the `Code` directory by opening `Code/main.ipynb` and running all cells. The notebook writes:
+1. Open `Code/main.ipynb` and run all cells. `RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` can be set to `False` if you want to skip a stage. The first DistilBERT run downloads the pretrained weights.
+
+   The notebook writes:
 
    - `Code/artifacts/vectorizer.pkl`
    - `Code/artifacts/logreg_model.pkl`
@@ -64,27 +56,25 @@ pip install -r Code/requirements.txt
    - `Code/artifacts/distilbert/`
    - `Code/artifacts/metrics.csv`
 
-2. Start the demo from the repository root:
+2. From the project folder:
 
 ```bash
 streamlit run Code/app_deploy.py
 ```
 
-The app scores one pasted SMS with logistic regression, the GRU, and DistilBERT, side by side. Run the notebook once so all three artifact files exist. Logistic regression is already saved. The GRU and DistilBERT appear after those notebook cells run.
+Paste a message and the app shows the logistic regression, GRU, and DistilBERT decisions next to each other. A model only appears if that notebook section has been run and the file is in `artifacts/`.
 
-`RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` at the top of the modeling section can be set to `False` to skip a stage.
+## What we report
 
-## Evaluation
+For every model, on the same test set:
 
-Each model is scored on the same held-out test set:
-
-- Accuracy
-- Spam precision, recall, and F1
+- accuracy
+- spam precision, recall, and F1
 - PR-AUC
-- Confusion matrix
+- confusion matrix
 
-The spam decision threshold is chosen on the validation split, then applied once to the test split.
+The spam threshold is chosen on the validation set, then applied to the test set.
 
-## Contributors
+## Team
 
-Add the team names for the course submission here.
+Add our names here.

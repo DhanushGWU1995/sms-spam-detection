@@ -1,13 +1,13 @@
-# Final group presentation
+# Final presentation
 
-Put the slide deck for the final presentation in this folder (PowerPoint or PDF).
+Drop the slides in this folder (PowerPoint or PDF).
 
-Suggested slide order:
+Order we are planning:
 
-1. Problem: classify an SMS as spam or ham.
-2. Dataset: UCI SMS Spam Collection, class balance, and why duplicates are removed before the split.
-3. Model ladder: TF-IDF + logistic regression, GRU, fine-tuned DistilBERT.
-4. Shared evaluation protocol and the comparison table from `Code/main.ipynb`.
-5. Interpretability: LIME and SHAP on the same example messages.
-6. Error analysis: missed spam versus blocked ham.
-7. Live demo of `Code/app_deploy.py`.
+1. The task: spam vs ham.
+2. The UCI dataset, the class imbalance, and why we drop duplicates before splitting.
+3. The three models: TF-IDF + logistic regression, GRU, DistilBERT.
+4. The comparison table from `Code/main.ipynb`.
+5. LIME and SHAP on the same messages.
+6. A few mistakes: missed spam and blocked ham.
+7. Demo of `Code/app_deploy.py`.

@@ -1,5 +1,5 @@
 # Group proposal
 
-`Project_Proposal.md` is the working proposal for this project.
+`Project_Proposal.md` is the proposal.
 
-Export it to PDF or DOCX before submission if the course portal asks for that format, and keep the exported file in this folder.
+If the submission portal wants a PDF or Word file, export it and leave the file in this folder.

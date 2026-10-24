@@ -2,61 +2,63 @@
 
 ## Team
 
-Add each team member's name and role before submission.
+Add our names and who is doing what before we turn this in.
 
 ## Problem
 
-Phone users still receive unsolicited SMS: prize scams, premium-rate traps, and phishing. Hand-written keyword rules miss obfuscated wording and also block ordinary messages that happen to contain words like "free" or "call". This project builds a supervised classifier that reads the message text and labels it spam or ham, then explains which tokens drove the decision.
+We want to tell spam SMS from normal ones (ham). Keyword rules are easy to dodge, and they also block normal texts that happen to say "free" or "call". The plan is to train a classifier on the message text and then check which words the model is using.
 
 ## Dataset
 
-The [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) contains 5,574 English SMS messages labeled ham or spam (4,827 ham, 747 spam). Messages are short, informal, and full of abbreviations. Duplicate texts will be removed before splitting so the same message cannot appear in both train and test. The remaining rows will be split 80/10/10, stratified on the label, with one fixed seed shared by every model.
+The [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) has 5,574 English messages: 4,827 ham and 747 spam. The texts are short and full of abbreviations.
 
-Spam is the minority class (13.4%). A classifier that always predicts ham is already about 87% accurate, so model selection will use spam precision, recall, F1, and precision-recall AUC.
+We will drop duplicate messages before splitting, so the same text cannot land in both train and test. The split is 80/10/10, stratified, with one seed for every model.
 
-## Proposed approach
+Spam is only 13.4% of the data. Always predicting ham is already about 87% accurate, so we will compare models with spam precision, recall, F1, and PR-AUC.
 
-One task, three model families, and one explanation layer.
+## Approach
 
-| Stage | Method | What it covers |
+Same task, three models, then explanations.
+
+| Model | What we will train | Why it is in the project |
 | --- | --- | --- |
-| Classical baseline | Word and character TF-IDF, then L2 logistic regression with balanced class weights | Bag-of-n-grams features and a linear classifier |
-| Recurrent network | GRU over learned token embeddings, trained in PyTorch with a class-weighted loss | Sequence modeling |
-| Transformer | Fine-tuned `distilbert-base-uncased` (max length 128, a few epochs) | Contextual representations |
-| Interpretability | Coefficient lists, LIME on individual messages, and SHAP on the linear model | Why a message was labeled spam |
+| TF-IDF + logistic regression | Word and character n-grams, class-weighted logistic regression | Classical baseline |
+| GRU | Embedding plus one GRU in PyTorch, class-weighted loss | RNN |
+| DistilBERT | Fine-tune `distilbert-base-uncased`, max length 128, a few epochs | Transformer |
+| LIME and SHAP | Coefficients, LIME on single messages, SHAP on the linear model | Interpretability |
 
-Cleaning stays light. Digits, currency marks, and short codes are spam evidence, so they are kept for the classical model and the GRU. DistilBERT reads the raw message through its own tokenizer.
+Cleaning stays light. Digits, currency, and short codes are spam clues, so the linear model and the GRU keep them. DistilBERT reads the raw text through its own tokenizer.
 
-The spam threshold for each model is selected on the validation set by spam F1. Test labels are used only for the final table.
+Each model gets its own spam threshold, chosen on the validation set by spam F1. We only look at the test labels for the final table.
 
 ## Demo
 
-`Code/app_deploy.py` is a Streamlit app. After the notebook saves all three models, the app scores one pasted SMS with logistic regression, the GRU, and DistilBERT, and shows each spam probability.
+`Code/app_deploy.py` is a Streamlit app. After the notebook saves the models, we can paste one SMS and see the three predictions side by side, with the spam probability for each.
 
-## Deliverables
+## What we will turn in
 
-| Folder | Contents |
+| Folder | What goes here |
 | --- | --- |
-| `Code/` | Notebook, demo, dataset, and saved models |
+| `Code/` | Notebook, demo, data, saved models |
 | `Group-Proposal/` | This proposal |
-| `Final-Group-Presentation/` | Slide deck |
-| `Final-Group-Project-Report/` | Written report with the comparison table, plots, and error analysis |
+| `Final-Group-Presentation/` | Slides |
+| `Final-Group-Project-Report/` | Write-up with the table, plots, and a few error examples |
 
-## Evaluation plan
+## Evaluation
 
-Report, for every model:
+For each model:
 
-- Accuracy
-- Spam precision, recall, and F1
+- accuracy
+- spam precision, recall, and F1
 - PR-AUC
-- Confusion matrix
+- confusion matrix
 
-Then a short error analysis of false negatives (missed spam) and false positives (blocked ham), using the same example messages for LIME and SHAP.
+Then a short look at missed spam and blocked ham, using the same example texts for LIME and SHAP.
 
 ## References
 
-- Almeida, T. A., Gómez Hidalgo, J. M., and Yamakami, A. Contributions to the Study of SMS Spam Filtering: A New Collection and Results. *Proceedings of the 2011 ACM Symposium on Document Engineering (DocEng)*, 2011.
+- Almeida, T. A., Gómez Hidalgo, J. M., and Yamakami, A. Contributions to the Study of SMS Spam Filtering: A New Collection and Results. ACM DocEng, 2011.
 - UCI Machine Learning Repository, SMS Spam Collection. https://archive.ics.uci.edu/dataset/228/sms+spam+collection
-- Sanh, V., Debut, L., Chaumond, J., and Wolf, T. DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter. *NeurIPS EMC2 Workshop*, 2019.
-- Ribeiro, M. T., Singh, S., and Guestrin, C. "Why Should I Trust You?": Explaining the Predictions of Any Classifier. *KDD*, 2016.
-- Lundberg, S. M. and Lee, S. A Unified Approach to Interpreting Model Predictions. *NeurIPS*, 2017.
+- Sanh, V., Debut, L., Chaumond, J., and Wolf, T. DistilBERT, a distilled version of BERT. NeurIPS EMC2 Workshop, 2019.
+- Ribeiro, M. T., Singh, S., and Guestrin, C. "Why Should I Trust You?": Explaining the Predictions of Any Classifier. KDD, 2016.
+- Lundberg, S. M. and Lee, S. A Unified Approach to Interpreting Model Predictions. NeurIPS, 2017.
