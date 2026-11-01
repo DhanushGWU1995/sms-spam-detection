@@ -2,24 +2,24 @@
 
 Course project: classify an SMS as spam or ham (a normal message).
 
-We train three models on the same split of the UCI SMS Spam Collection, then explain the predictions with LIME and SHAP.
+We train three models on the same split of the Super SMS Dataset, then explain the predictions with LIME and SHAP.
 
 1. TF-IDF + logistic regression (baseline)
 2. GRU in PyTorch (RNN)
 3. Fine-tuned DistilBERT (transformer)
 
-Spam is the positive class. About 87% of the messages are ham, so accuracy by itself is misleading. We compare spam precision, recall, F1, and PR-AUC.
+Spam is the positive class. About 61% of the messages are ham and 39% are spam, so accuracy by itself can hide missed spam. We compare spam precision, recall, F1, and PR-AUC.
 
 ## Dataset
 
-- File: `Code/sms_spam.csv`
-- Source: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)
-- 5,574 messages: 4,827 ham (86.6%) and 747 spam (13.4%)
-- Columns: `Category` (`ham` or `spam`) and `Text`
+- File: `Code/super_sms_dataset.csv`
+- Source: [Super SMS Dataset](https://github.com/smspamresearch/spstudy)
+- About 68,000 messages collected from 2012 to 2024, roughly 61% ham and 39% spam
+- Columns: `SMSes` (the message) and `Labels` (`1` = spam, `0` = ham)
 
-`sms+spam+collection.zip` is the original download. The notebook uses the csv. Duplicate texts are removed before the 80/10/10 split.
+The notebook renames the columns to `Text` and `label`. Texts that appear with both labels are dropped, then duplicate texts are removed before the 80/10/10 split.
 
-Please cite Almeida, Gómez Hidalgo, and Yamakami, "Contributions to the Study of SMS Spam Filtering," ACM DocEng 2011.
+Please cite M. Salman, M. Ikram, and M. A. Kaafar, "Investigating Evasive Techniques in SMS Spam Filtering: A Comparative Analysis of Machine Learning Models," IEEE Access, 2024. https://ieeexplore.ieee.org/document/10431737
 
 ## Layout
 
@@ -28,7 +28,7 @@ Code/main.ipynb          training, plots, LIME, SHAP
 Code/app_deploy.py       streamlit demo
 Code/preprocess.py       text cleaning shared by the linear model, the GRU, and the app
 Code/inference.py        loads the saved models for the app
-Code/sms_spam.csv
+Code/super_sms_dataset.csv
 Code/artifacts/          created when the notebook is run
 Group-Proposal/
 Final-Group-Presentation/
@@ -45,7 +45,7 @@ pip install -r Code/requirements.txt
 
 ## How to run
 
-1. Open `Code/main.ipynb` and run all cells. `RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` can be set to `False` if you want to skip a stage. The first DistilBERT run downloads the pretrained weights.
+1. Open `Code/main.ipynb` and run all cells. `RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` can be set to `False` if you want to skip a stage. The first DistilBERT run downloads the pretrained weights. The dataset is large, so use a GPU for DistilBERT or set `BERT_EPOCHS = 1`.
 
    The notebook writes:
 
