@@ -1,13 +1,13 @@
 # Final presentation
 
-Drop the slides in this folder (PowerPoint or PDF).
+Put the slides in this folder (PowerPoint or PDF).
 
-Order we are planning:
+Here's the order we're planning:
 
-1. The task: spam vs ham.
-2. The Super SMS Dataset, the class balance, and why we drop duplicates and conflicting labels before splitting.
-3. The three models: TF-IDF + logistic regression, GRU, DistilBERT.
-4. The comparison table from `Code/main.ipynb`.
-5. LIME and SHAP on the same messages.
-6. A few mistakes: missed spam and blocked ham.
-7. Demo of `Code/app_deploy.py`.
+1. The task: spam vs ham, and why it's still a problem.
+2. The data: how we combined UCI and Super SMS, the class balance (about 61% ham / 39% spam), and why we removed duplicates and conflicting labels before splitting.
+3. The three models: TF-IDF + logistic regression, GRU, and DistilBERT.
+4. Results: the comparison table and confusion matrices from `Code/main.ipynb`. DistilBERT did best (F1 0.992).
+5. LIME and SHAP: which words each model relied on, including the masked numbers (`xxx`) and placeholders (`num`) that come from how each dataset was anonymized.
+6. Mistakes: a few examples of spam we missed and ham we wrongly blocked.
+7. Live demo of `Code/app_deploy.py`.
