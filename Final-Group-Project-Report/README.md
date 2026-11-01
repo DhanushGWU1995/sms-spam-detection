@@ -12,4 +12,4 @@ Sections we are using:
 6. Results (spam precision, recall, F1, PR-AUC) and confusion matrices
 7. LIME and SHAP
 8. Error examples, what did not work, conclusion
-9. References, including Almeida, Gómez Hidalgo, and Yamakami (ACM DocEng 2011)
+9. References, including Salman, Ikram, and Kaafar (IEEE Access 2024)
