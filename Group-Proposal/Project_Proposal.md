@@ -10,11 +10,11 @@ We want to tell spam SMS from normal ones (ham). Keyword rules are easy to dodge
 
 ## Dataset
 
-The [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) has 5,574 English messages: 4,827 ham and 747 spam. The texts are short and full of abbreviations.
+We use two public SMS collections, both stored as `Category` and `Text`. The [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) is the smaller one. We add the [Super SMS Dataset](https://github.com/smspamresearch/spstudy) and drop texts that already appear in UCI. The combined file, `Code/sms_combined.csv`, has 67,709 unique English messages: 41,390 ham and 26,319 spam. The texts are short and full of abbreviations.
 
-We will drop duplicate messages before splitting, so the same text cannot land in both train and test. The split is 80/10/10, stratified, with one seed for every model.
+We drop duplicate messages before splitting, so the same text cannot land in both train and test. The split is 80/10/10, stratified, with one seed for every model.
 
-Spam is only 13.4% of the data. Always predicting ham is already about 87% accurate, so we will compare models with spam precision, recall, F1, and PR-AUC.
+Spam is 38.9% of the combined file. Always predicting ham is already about 61% accurate, so we will compare models with spam precision, recall, F1, and PR-AUC.
 
 ## Approach
 

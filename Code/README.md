@@ -4,7 +4,8 @@ This folder has the notebook and the small demo app.
 
 | File | What it is |
 | --- | --- |
-| `sms_spam.csv` | UCI messages, columns `Category` and `Text` |
+| `sms_spam.csv` | original UCI messages, columns `Category` and `Text` |
+| `sms_combined.csv` | UCI plus Super SMS, same columns, one row per text |
 | `preprocess.py` | cleaning used by logistic regression, the GRU, and the app |
 | `main.ipynb` | EDA, the three models, LIME, and SHAP |
 | `app_deploy.py` | Streamlit page |
