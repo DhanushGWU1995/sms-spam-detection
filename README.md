@@ -1,35 +1,55 @@
 # SMS Spam Classifier
 
-Course project: classify an SMS as spam or ham (a normal message).
+This is our NLP final project. The goal is to classify a text message as spam or ham (a normal message).
 
-We train three models on the same split of the Super SMS Dataset, then explain the predictions with LIME and SHAP.
+We trained three models on the same data and compared them:
 
-1. TF-IDF + logistic regression (baseline)
-2. GRU in PyTorch (RNN)
-3. Fine-tuned DistilBERT (transformer)
+1. TF-IDF + logistic regression (our baseline)
+2. GRU in PyTorch (our RNN)
+3. Fine-tuned DistilBERT (our transformer)
 
-Spam is the positive class. About 61% of the messages are ham and 39% are spam, so accuracy by itself can hide missed spam. We compare spam precision, recall, F1, and PR-AUC.
+Then we used LIME and SHAP to see which words each model was actually paying attention to.
+
+Spam is the class we care about. Around 61% of the messages are ham and 39% are spam, so accuracy alone can look good even when a lot of spam gets through. That's why we focus on spam precision, recall, F1, and PR-AUC.
 
 ## Dataset
 
-- File: `Code/super_sms_dataset.csv`
-- Source: [Super SMS Dataset](https://github.com/smspamresearch/spstudy)
-- About 68,000 messages collected from 2012 to 2024, roughly 61% ham and 39% spam
-- Columns: `SMSes` (the message) and `Labels` (`1` = spam, `0` = ham)
+We combined two datasets:
 
-The notebook renames the columns to `Text` and `label`. Texts that appear with both labels are dropped, then duplicate texts are removed before the 80/10/10 split.
+| Dataset | File | Ham | Spam | Total |
+|---|---|---|---|---|
+| [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) | `Code/sms_spam.csv` | 4,827 | 747 | 5,574 |
+| [Super SMS Dataset](https://github.com/smspamresearch/spstudy) (2012–2024) | `Code/super_sms_dataset.csv` | 40,830 | 26,178 | 67,008 |
+| **Combined** | | **45,657** | **26,925** | **72,582** |
 
-Please cite M. Salman, M. Ikram, and M. A. Kaafar, "Investigating Evasive Techniques in SMS Spam Filtering: A Comparative Analysis of Machine Learning Models," IEEE Access, 2024. https://ieeexplore.ieee.org/document/10431737
+The two files have different column names, so the notebook puts them in the same format (`Text`, `label`, and a `Source` column so we know where each message came from). Some messages show up in both datasets, so we removed duplicates before splitting. That took out 4,340 rows plus 1 message that was labeled both ham and spam. We ended up with **68,242 messages** (61.3% ham, 38.7% spam) and split them 80/10/10 into train, validation, and test.
 
-## Layout
+Datasets we used:
+- T. A. Almeida, J. M. Gómez Hidalgo, and A. Yamakami, "Contributions to the Study of SMS Spam Filtering: New Collection and Results," ACM DocEng, 2011.
+- M. Salman, M. Ikram, and M. A. Kaafar, "Investigating Evasive Techniques in SMS Spam Filtering: A Comparative Analysis of Machine Learning Models," IEEE Access, 2024. https://ieeexplore.ieee.org/document/10431737
+
+## Results
+
+All three models were tested on the same 6,825 test messages:
+
+| Model | Accuracy | Precision | Recall | F1 | PR-AUC |
+|---|---|---|---|---|---|
+| Logistic Regression | 0.990 | 0.990 | 0.984 | 0.987 | 0.998 |
+| GRU | 0.988 | 0.983 | 0.984 | 0.984 | 0.998 |
+| **DistilBERT** | **0.994** | **0.993** | **0.992** | **0.992** | **0.999** |
+
+DistilBERT did the best on every metric and missed about half as much spam as the other two. Logistic regression was surprisingly close for a much simpler model. We ran everything on an AWS g5.xlarge GPU. The full numbers are in `Code/artifacts/metrics.csv`.
+
+## What's in the repo
 
 ```
-Code/main.ipynb          training, plots, LIME, SHAP
-Code/app_deploy.py       streamlit demo
-Code/preprocess.py       text cleaning shared by the linear model, the GRU, and the app
-Code/inference.py        loads the saved models for the app
-Code/super_sms_dataset.csv
-Code/artifacts/          created when the notebook is run
+Code/main.ipynb             the whole pipeline: EDA, training, results, LIME, SHAP
+Code/app_deploy.py          Streamlit demo app
+Code/preprocess.py          text cleaning used by logistic regression, the GRU, and the app
+Code/inference.py           loads the saved models for the app
+Code/sms_spam.csv           UCI dataset
+Code/super_sms_dataset.csv  Super SMS dataset
+Code/artifacts/             saved models and results (created when you run the notebook)
 Group-Proposal/
 Final-Group-Presentation/
 Final-Group-Project-Report/
@@ -37,17 +57,17 @@ Final-Group-Project-Report/
 
 ## Setup
 
-Python 3.10 or newer.
+You need Python 3.10 or newer.
 
 ```bash
 pip install -r Code/requirements.txt
 ```
 
-## How to run
+## How to run it
 
-1. Open `Code/main.ipynb` and run all cells. `RUN_RNN`, `RUN_BERT`, and `RUN_EXPLAIN` can be set to `False` if you want to skip a stage. The first DistilBERT run downloads the pretrained weights. The dataset is large, so use a GPU for DistilBERT or set `BERT_EPOCHS = 1`.
+1. Open `Code/main.ipynb` and run all the cells. If you want to skip a part, set `RUN_RNN`, `RUN_BERT`, or `RUN_EXPLAIN` to `False` at the top. DistilBERT downloads its pretrained weights the first time. The dataset is pretty big, so use a GPU for DistilBERT or set `BERT_EPOCHS = 1`.
 
-   The notebook writes:
+   The notebook saves:
 
    - `Code/artifacts/vectorizer.pkl`
    - `Code/artifacts/logreg_model.pkl`
@@ -56,24 +76,24 @@ pip install -r Code/requirements.txt
    - `Code/artifacts/distilbert/`
    - `Code/artifacts/metrics.csv`
 
-2. From the project folder:
+2. Then, from the project folder, start the app:
 
 ```bash
 streamlit run Code/app_deploy.py
 ```
 
-Paste a message and the app shows the logistic regression, GRU, and DistilBERT decisions next to each other. A model only appears if that notebook section has been run and the file is in `artifacts/`.
+Paste in any text message and the app shows what logistic regression, the GRU, and DistilBERT each think. A model only shows up if you've run its part of the notebook.
 
 ## What we report
 
-For every model, on the same test set:
+For each model, on the same test set:
 
 - accuracy
 - spam precision, recall, and F1
 - PR-AUC
 - confusion matrix
 
-The spam threshold is chosen on the validation set, then applied to the test set.
+Each model picks its spam cutoff on the validation set, and then we use that cutoff on the test set.
 
 ## Team
 
