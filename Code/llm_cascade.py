@@ -9,7 +9,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
 from inference import (
     ARTIFACT_DIR,
@@ -21,7 +27,7 @@ from inference import (
 from preprocess import preprocess_text
 
 LLM_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
-MARGINS = (0.0, 0.05, 0.10, 0.15, 0.20, 0.30)
+MARGINS = (0.05, 0.10, 0.15, 0.20, 0.30)
 
 
 def _metrics(y_true, pred):
@@ -102,6 +108,43 @@ def _parse_label(text):
     return -1
 
 
+def load_qwen():
+    return _load_llm()
+
+
+def label_message(text, bundle):
+    """Ask Qwen for one SMS. bundle is the tuple returned by load_qwen."""
+    labels, cost = _llm_predict([text], *bundle, batch_size=1)
+    parsed = int(labels[0]) >= 0
+    return {
+        "name": "Qwen",
+        "role": "Open LLM, called when DistilBERT is close to its threshold",
+        "ready": parsed,
+        "spam": bool(int(labels[0]) == 1) if parsed else None,
+        "seconds": cost["seconds"],
+        "detail": "" if parsed else "Qwen did not answer spam or ham. We keep DistilBERT's label.",
+    }
+
+
+def saved_weak_margin(default=0.15):
+    path = ARTIFACT_DIR / "llm_summary.json"
+    if not path.exists():
+        return default
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    return float(saved.get("margin", default))
+
+
+def final_decision(outcomes, weak=False, qwen_spam=None):
+    """Use the trained models, or Qwen when DistilBERT's confidence is weak."""
+    ready = [item for item in outcomes if item.get("ready")]
+    if weak:
+        return {"called_qwen": True, "spam": qwen_spam}
+    if not ready:
+        return {"called_qwen": False, "spam": None}
+    votes = sum(1 for item in ready if item["spam"])
+    return {"called_qwen": False, "spam": votes >= (len(ready) / 2)}
+
+
 def _load_llm():
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -159,10 +202,13 @@ def _llm_predict(texts, tokenizer, model, device, batch_size=32):
     }
 
 
-def _route_mask(bert_proba, preds, threshold, margin):
-    disagree = (preds["logreg"] != preds["gru"]) | (preds["logreg"] != preds["distilbert"])
-    close = np.abs(bert_proba - threshold) <= margin
-    return disagree | close
+def _weak_mask(bert_proba, threshold, margin):
+    return np.abs(bert_proba - threshold) <= margin
+
+
+def _majority(preds):
+    votes = preds["logreg"] + preds["gru"] + preds["distilbert"]
+    return (votes >= 2).astype(int)
 
 
 def _hybrid(bert_pred, llm_pred, route):
@@ -172,13 +218,12 @@ def _hybrid(bert_pred, llm_pred, route):
     return pred
 
 
-def _choose_margin(y_true, bert_proba, preds, llm_pred, threshold):
-    bert_pred = (bert_proba >= threshold).astype(int)
-    best_margin, best_f1 = 0.0, -1.0
+def _choose_margin(y_true, bert_proba, traditional_pred, llm_pred, threshold):
+    best_margin, best_f1 = MARGINS[0], -1.0
     rows = []
     for margin in MARGINS:
-        route = _route_mask(bert_proba, preds, threshold, margin)
-        pred = _hybrid(bert_pred, llm_pred, route)
+        route = _weak_mask(bert_proba, threshold, margin)
+        pred = _hybrid(traditional_pred, llm_pred, route)
         scores = _metrics(y_true, pred)
         scores["margin"] = margin
         scores["routed"] = float(route.mean())
@@ -231,63 +276,147 @@ def run_llm_evaluation(artifact_dir=ARTIFACT_DIR):
         "output_tokens": val_cost["output_tokens"] + test_cost["output_tokens"],
     }
     llm_cost["seconds_per_message"] = llm_cost["seconds"] / max(llm_cost["messages"], 1)
+    val_traditional = _majority(val_preds)
+    test_traditional = _majority(test_preds)
     margin, val_rows = _choose_margin(
-        y_val, val_proba["distilbert"], val_preds, val_llm, thresholds["distilbert"]
+        y_val,
+        val_proba["distilbert"],
+        val_traditional,
+        val_llm,
+        thresholds["distilbert"],
     )
 
-    bert_pred = test_preds["distilbert"]
-    route = _route_mask(test_proba["distilbert"], test_preds, thresholds["distilbert"], margin)
-    hybrid = _hybrid(bert_pred, test_llm, route)
+    route = _weak_mask(test_proba["distilbert"], thresholds["distilbert"], margin)
+    hybrid = _hybrid(test_traditional, test_llm, route)
     llm_all = np.where(test_llm >= 0, test_llm, 0)
 
-    table = []
-    for name, key in (
-        ("Logistic Regression", "logreg"),
-        ("GRU", "gru"),
-        ("DistilBERT", "distilbert"),
-    ):
-        row = _metrics(y_test, test_preds[key])
-        row["model"] = name
-        row["routed_to_llm"] = 0.0
-        table.append(row)
+    traditional_row = _metrics(y_test, test_traditional)
+    traditional_row["approach"] = "Traditional models"
+    traditional_row["routed_to_llm"] = 0.0
     llm_row = _metrics(y_test, llm_all)
-    llm_row["model"] = "LLM on every message"
+    llm_row["approach"] = "LLM only"
     llm_row["routed_to_llm"] = 1.0
-    table.append(llm_row)
     hybrid_row = _metrics(y_test, hybrid)
-    hybrid_row["model"] = "Hybrid"
+    hybrid_row["approach"] = "Hybrid"
     hybrid_row["routed_to_llm"] = float(route.mean())
-    table.append(hybrid_row)
+    table = [traditional_row, llm_row, hybrid_row]
 
     asked = route & (test_llm >= 0)
-    changed = asked & (hybrid != bert_pred)
+    changed = asked & (hybrid != test_traditional)
     helped = changed & (hybrid == y_test)
     hurt = changed & (hybrid != y_test)
     summary = {
         "llm": llm_cost,
         "margin": margin,
+        "rule": (
+            "Qwen runs when the DistilBERT spam probability is within the chosen "
+            "margin of its threshold. Every other message keeps the majority vote "
+            "of logistic regression, the GRU, and DistilBERT."
+        ),
         "validation_margins": val_rows,
         "test_messages": int(len(y_test)),
         "routed_messages": int(route.sum()),
         "unparsed_test": int((test_llm < 0).sum()),
         "flips_correct": int(helped.sum()),
         "flips_wrong": int(hurt.sum()),
-        "distilbert_f1": next(row["f1"] for row in table if row["model"] == "DistilBERT"),
+        "traditional_f1": traditional_row["f1"],
         "hybrid_f1": hybrid_row["f1"],
         "llm_f1": llm_row["f1"],
     }
-    frame = pd.DataFrame(table).set_index("model")
-    frame = frame[["accuracy", "precision", "recall", "f1", "routed_to_llm"]]
+    frame = pd.DataFrame(table).set_index("approach")
+    frame = frame[["f1", "precision", "recall", "accuracy", "routed_to_llm"]]
     frame.to_csv(artifact_dir / "llm_metrics.csv")
     (artifact_dir / "llm_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(frame.to_string(float_format=lambda value: f"{value:.4f}"))
     print(
-        f"Validation chose margin {margin:.2f}. "
-        f"Test messages sent to the LLM: {int(route.sum())}/{len(y_test)}. "
+        f"Weak-confidence margin chosen on validation: {margin:.2f}. "
+        f"Test messages sent to Qwen: {int(route.sum())}/{len(y_test)}. "
         f"Correct flips {int(helped.sum())}, wrong flips {int(hurt.sum())}."
     )
     return {"table": frame, "summary": summary}
 
 
+def _report_row(y_true, pred, routed_rate):
+    row = _metrics(y_true, pred)
+    matrix = confusion_matrix(
+        np.asarray(y_true).astype(int),
+        np.asarray(pred).astype(int),
+        labels=[0, 1],
+    )
+    row["confusion"] = matrix.astype(int).tolist()
+    row["routed_to_llm"] = float(routed_rate)
+    row["messages"] = int(len(y_true))
+    return row
+
+
+def export_split_reports(artifact_dir=ARTIFACT_DIR):
+    """Save train and test scores plus confusion matrices for the three approaches.
+
+    The weak-confidence margin is the one already chosen on validation.
+    """
+    artifact_dir = Path(artifact_dir)
+    margin = saved_weak_margin()
+    thresholds = load_thresholds()
+    logreg = load_logreg()
+    gru = load_gru()
+    bert = load_distilbert()
+    if logreg is None or gru is None or bert is None:
+        raise FileNotFoundError("Train the three models before exporting the reports.")
+
+    print("Loading Qwen.", flush=True)
+    tokenizer, llm, device = _load_llm()
+    splits = {}
+    for name in ("train", "test"):
+        frame = pd.read_csv(artifact_dir / f"{name}.csv")
+        texts = frame["Text"].astype(str).tolist()
+        y_true = frame["label"].to_numpy().astype(int)
+        print(f"Scoring {name} with the three saved models ({len(texts)} messages).", flush=True)
+        proba = {
+            "logreg": _logreg_proba(logreg, texts),
+            "gru": _gru_proba(gru, texts),
+            "distilbert": _bert_proba(bert, texts),
+        }
+        preds = {key: (proba[key] >= thresholds[key]).astype(int) for key in proba}
+        traditional = _majority(preds)
+        print(f"Running the LLM on {name}.", flush=True)
+        llm_labels, _cost = _llm_predict(texts, tokenizer, llm, device)
+        route = _weak_mask(proba["distilbert"], thresholds["distilbert"], margin)
+        hybrid = _hybrid(traditional, llm_labels, route)
+        llm_all = np.where(llm_labels >= 0, llm_labels, 0)
+        splits[name] = {
+            "messages": int(len(y_true)),
+            "approaches": {
+                "Traditional models": _report_row(y_true, traditional, 0.0),
+                "LLM only": _report_row(y_true, llm_all, 1.0),
+                "Hybrid": _report_row(y_true, hybrid, float(route.mean())),
+            },
+        }
+
+    report = {
+        "margin": margin,
+        "positive_class": "spam",
+        "order": ["ham", "spam"],
+        "splits": splits,
+    }
+    path = artifact_dir / "approach_reports.json"
+    path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(f"Wrote approach reports to {path}", flush=True)
+    for name, payload in splits.items():
+        print(name, flush=True)
+        for approach, row in payload["approaches"].items():
+            print(
+                f"  {approach}: f1={row['f1']:.4f} precision={row['precision']:.4f} "
+                f"recall={row['recall']:.4f} accuracy={row['accuracy']:.4f} "
+                f"confusion={row['confusion']}",
+                flush=True,
+            )
+    return report
+
+
 if __name__ == "__main__":
-    run_llm_evaluation()
+    import sys
+
+    if "--reports" in sys.argv:
+        export_split_reports()
+    else:
+        run_llm_evaluation()

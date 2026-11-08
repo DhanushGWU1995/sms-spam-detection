@@ -33,7 +33,7 @@ Each model gets its own spam threshold, chosen on the validation set by spam F1.
 
 ## Demo
 
-`Code/app_deploy.py` is a Streamlit app. After the notebook saves the models, we can paste one SMS and see the three predictions side by side, with the spam probability for each.
+`Code/app_deploy.py` is a Streamlit app. After the notebook saves the models, we can paste one SMS and see the three predictions side by side. If DistilBERT is close to its threshold, Qwen2.5-1.5B makes the final call.
 
 ## What we will turn in
 

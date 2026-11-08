@@ -7,7 +7,8 @@ This folder has the notebook and the small demo app.
 | `sms_spam.csv` | original UCI messages, columns `Category` and `Text` |
 | `sms_combined.csv` | UCI plus Super SMS, same columns, one row per text |
 | `preprocess.py` | cleaning used by logistic regression, the GRU, and the app |
-| `main.ipynb` | EDA, the three models, LIME, and SHAP |
+| `main.ipynb` | EDA, the three models, LIME, SHAP, and the Qwen comparison |
+| `llm_cascade.py` | Qwen labels, used when DistilBERT confidence is weak |
 | `app_deploy.py` | Streamlit page |
 | `inference.py` | loads the saved models for the app |
 | `requirements.txt` | packages |
