@@ -2,11 +2,11 @@
   "llm": {
     "model": "Qwen/Qwen2.5-1.5B-Instruct",
     "device": "cuda",
-    "seconds": 108.78938633199868,
+    "seconds": 108.40600913399976,
     "messages": 13542,
     "input_tokens": 770575,
     "output_tokens": 27089,
-    "seconds_per_message": 0.00803348001270113
+    "seconds_per_message": 0.008005169778023909
   },
   "margin": 0.05,
   "rule": "Qwen runs when the DistilBERT spam probability is within the chosen margin of its threshold. Every other message keeps the majority vote of logistic regression, the GRU, and DistilBERT.",
