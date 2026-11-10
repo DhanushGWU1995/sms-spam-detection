@@ -25,7 +25,6 @@ DATA_PREFIXES = (
     "artifacts/indexes/",
     "artifacts/metrics/",
     "artifacts/viz/",
-    "artifacts/backups/",
 )
 
 
