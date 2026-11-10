@@ -3,15 +3,28 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-DL_PY="${DL_PY:-/home/ubuntu/dl-venv/bin/python}"
-VENDOR="${VENDOR:-$ROOT/.vendor}"
+# Prefer project uv venv (.venv). Override with DL_PY=... if needed.
+if [[ -z "${DL_PY:-}" ]]; then
+  if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+    DL_PY="${ROOT}/.venv/bin/python"
+  elif [[ -x /home/ubuntu/dl-venv/bin/python ]]; then
+    DL_PY=/home/ubuntu/dl-venv/bin/python
+  else
+    DL_PY="$(command -v python3)"
+  fi
+fi
 
 if [[ ! -x "$DL_PY" ]]; then
-  echo "Missing dl-venv python at $DL_PY"
+  echo "No Python found. Run: bash scripts/setup_venv.sh"
   exit 1
 fi
 
-export PYTHONPATH="$ROOT:$VENDOR${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="${ROOT}${PYTHONPATH:+:$PYTHONPATH}"
+# Keep .vendor on path for legacy shared-env installs.
+if [[ -d "${ROOT}/.vendor" ]]; then
+  export PYTHONPATH="${PYTHONPATH}:${ROOT}/.vendor"
+fi
+
 echo "Using $DL_PY"
 echo "PYTHONPATH=$PYTHONPATH"
 "$DL_PY" - <<'PY'
@@ -35,11 +48,7 @@ echo "[4/6] Build RAG index -> S3"
 "$DL_PY" scripts/build_rag_index.py
 
 echo "[5/6] Evaluate approaches (read/write S3)"
-if [[ "${SKIP_LLM_EVAL:-0}" == "1" ]]; then
-  "$DL_PY" scripts/evaluate_approaches.py --skip-llm
-else
-  "$DL_PY" scripts/evaluate_approaches.py
-fi
+"$DL_PY" scripts/evaluate_approaches.py
 
 echo "[6/6] Build dashboard viz -> S3"
 "$DL_PY" scripts/build_dashboard_viz.py

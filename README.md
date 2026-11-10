@@ -49,7 +49,7 @@ Run steps **in this order**. Steps 3–8 are also wrapped by `scripts/run_pipeli
 ```
 1. Clone / sync code on EC2
 2. AWS credentials (STS / env vars)
-3. Python vendor deps          →  scripts/setup_venv.sh
+3. Python env via uv           →  scripts/setup_venv.sh  (creates `.venv`)
 4. Seed knowledge base         →  S3 data/knowledge + provenance
 5. Prepare baseline splits     →  S3 data/processed
 6. Train classifiers           →  S3 artifacts/models
@@ -63,10 +63,11 @@ Run steps **in this order**. Steps 3–8 are also wrapped by `scripts/run_pipeli
 
 ## 0) Prerequisites
 
-- EC2 instance with GPU (course `g5.xlarge`) and shared env at `/home/ubuntu/dl-venv`
+- EC2 with GPU recommended (course `g5.xlarge`); CPU works for API-only if models already exist in S3
 - SSH key (example): `AWS_NLP_Config_keys.pem`
 - Temporary AWS credentials with S3 access to your course prefix
-- Node.js 18+ on the machine where you run the Angular UI (EC2 or your laptop)
+- Node.js 18+ where you run the Angular UI (EC2 or laptop)
+- Network access so `uv` can install packages / PyTorch
 
 Repo: [https://github.com/DhanushGWU1995/sms-spam-detection](https://github.com/DhanushGWU1995/sms-spam-detection)
 
@@ -79,16 +80,16 @@ Repo: [https://github.com/DhanushGWU1995/sms-spam-detection](https://github.com/
 ssh -i /path/to/AWS_NLP_Config_keys.pem ubuntu@<EC2_PUBLIC_IP>
 
 # on EC2
-cd ~/dl-venv
+cd ~
 git clone https://github.com/DhanushGWU1995/sms-spam-detection.git nlp_project_final
 # or, if already cloned:
-cd ~/dl-venv/nlp_project_final && git pull origin main
+cd ~/nlp_project_final && git pull origin main
 ```
 
 Working directory for all later commands:
 
 ```bash
-cd ~/dl-venv/nlp_project_final
+cd ~/nlp_project_final
 ```
 
 ---
@@ -111,21 +112,52 @@ export SCAMSHIELD_S3_URI="s3://dats-nlp/dhanush.mathivanan@gwu.edu/nlp-data/"
 export SCAMSHIELD_CACHE_DIR="/tmp/scamshield-s3-cache"
 ```
 
-Quick boto3 check (lists your prefix):
-
-```bash
-export PYTHONPATH="$PWD:$PWD/.vendor"
-/home/ubuntu/dl-venv/bin/python scripts/sync_s3.py --list
-```
-
 ---
 
-## 3) Install Python deps into project `.vendor`
+## 3) Install Python deps with **uv** (fresh EC2)
 
-Uses the shared `dl-venv` interpreter/torch; installs only missing packages into `./.vendor` (does not mutate `dl-venv`).
+`scripts/setup_venv.sh` installs `uv` if needed, creates `.venv` (Python 3.11), installs CUDA PyTorch when a GPU is present, then installs all of `requirements.txt`, plus the spaCy `en_core_web_sm` model.
 
 ```bash
+cd ~/nlp_project_final
 bash scripts/setup_venv.sh
+```
+
+Equivalent manual commands:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+
+uv python install 3.11
+uv venv --python 3.11 .venv
+source .venv/bin/activate
+
+# GPU EC2 (g5 / CUDA 12.4 wheels). On CPU-only hosts omit this line;
+# setup_venv.sh already chooses CPU torch automatically.
+uv pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+uv pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+Activate in every new shell before running pipeline / API:
+
+```bash
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
+```
+
+Quick S3 check:
+
+```bash
+python scripts/sync_s3.py --list
+```
+
+CPU-only torch (no NVIDIA):
+
+```bash
+SKIP_CUDA_TORCH=1 bash scripts/setup_venv.sh
 ```
 
 ---
@@ -135,6 +167,8 @@ bash scripts/setup_venv.sh
 ### Option A — one command (recommended)
 
 ```bash
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
 bash scripts/run_pipeline.sh
 ```
 
@@ -150,34 +184,28 @@ This runs, in order:
 | Evaluate approaches | `scripts/evaluate_approaches.py` | `artifacts/metrics/` |
 | Dashboard figures | `scripts/build_dashboard_viz.py` | `artifacts/viz/` |
 
-Skip the slow LLM portion of evaluation:
-
-```bash
-SKIP_LLM_EVAL=1 bash scripts/run_pipeline.sh
-```
+If S3 already has models/indexes/metrics (this course prefix does), you can skip the pipeline and go straight to the API.
 
 ### Option B — run steps individually
 
 ```bash
-export PYTHONPATH="$PWD:$PWD/.vendor"
-PY=/home/ubuntu/dl-venv/bin/python
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
 
-$PY scripts/sync_s3.py --init
-$PY scripts/seed_knowledge_base.py          # knowledge + provenance → S3
-$PY scripts/prepare_baseline_data.py        # processed CSVs → S3
-$PY scripts/train_classifiers.py            # sklearn + DistilBERT → S3
-$PY scripts/build_rag_index.py              # FAISS + chunks → S3
-$PY scripts/evaluate_approaches.py          # metrics → S3
-# optional faster eval:
-# $PY scripts/evaluate_approaches.py --skip-llm
-$PY scripts/build_dashboard_viz.py          # plots → S3
+python scripts/sync_s3.py --init
+python scripts/seed_knowledge_base.py          # knowledge + provenance → S3
+python scripts/prepare_baseline_data.py        # processed CSVs → S3
+python scripts/train_classifiers.py            # sklearn + DistilBERT → S3
+python scripts/build_rag_index.py              # FAISS + chunks → S3
+python scripts/evaluate_approaches.py          # metrics → S3
+python scripts/build_dashboard_viz.py          # plots → S3
 ```
 
 After a successful pipeline, confirm:
 
 ```bash
-$PY scripts/sync_s3.py --list
-# expect artifacts/{indexes,models,metrics[,viz]} and data/{knowledge,processed,provenance}
+python scripts/sync_s3.py --list
+# expect artifacts/{indexes,models,metrics,viz} and data/{raw,knowledge,processed,provenance}
 ```
 
 ---
@@ -187,10 +215,10 @@ $PY scripts/sync_s3.py --list
 Keep AWS credentials exported in this shell. The API downloads models/indexes from S3 into the ephemeral cache on first use.
 
 ```bash
-cd ~/dl-venv/nlp_project_final
-export PYTHONPATH="$PWD:$PWD/.vendor"
-/home/ubuntu/dl-venv/bin/python -m uvicorn backend.app.main:app \
-  --host 0.0.0.0 --port 8000
+cd ~/nlp_project_final
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Health check (from EC2 or via tunnel):
@@ -207,7 +235,7 @@ curl -s http://127.0.0.1:8000/api/health
 ### On EC2 (UI served from the instance)
 
 ```bash
-cd ~/dl-venv/nlp_project_final/frontend
+cd ~/nlp_project_final/frontend
 npm install
 npm start
 # ng serve on :4200, proxy /api → http://127.0.0.1:8000
@@ -247,14 +275,14 @@ npm start
 ## Useful boto3 helpers
 
 ```bash
-export PYTHONPATH="$PWD:$PWD/.vendor"
-PY=/home/ubuntu/dl-venv/bin/python
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
 
-$PY scripts/sync_s3.py --list
-$PY scripts/sync_s3.py --list data/knowledge/
-$PY scripts/sync_s3.py --download          # pull data+artifacts into cache
-$PY scripts/sync_s3.py --rm path/in/prefix  # delete one key
-$PY scripts/sync_s3.py --recursive --rm unwanted/prefix/
+python scripts/sync_s3.py --list
+python scripts/sync_s3.py --list data/knowledge/
+python scripts/sync_s3.py --download          # pull data+artifacts into cache
+python scripts/sync_s3.py --rm path/in/prefix  # delete one key
+python scripts/sync_s3.py --recursive --rm unwanted/prefix/
 ```
 
 ---
@@ -263,7 +291,7 @@ $PY scripts/sync_s3.py --recursive --rm unwanted/prefix/
 
 - Full GPU training / Qwen inference is intended on EC2.
 - You can develop the Angular UI locally (step 10) while the API runs on EC2.
-- If you run Python scripts locally, you still need boto3 + valid AWS credentials and `pip install -r requirements.txt` (or a venv). S3 remains the source of truth.
+- On a laptop: `bash scripts/setup_venv.sh` (uses CPU torch unless a GPU is present), export AWS credentials, then run scripts with `source .venv/bin/activate`. S3 remains the source of truth.
 
 ---
 
