@@ -1,4 +1,8 @@
-"""S3-backed data store — durable data lives in S3 only; EC2 keeps an ephemeral cache."""
+"""S3-backed data store — durable data lives in S3 only; EC2 keeps an ephemeral cache.
+
+All S3 I/O in this project goes through boto3 via ``S3DataStore``. Do not shell out
+to the AWS CLI for reads, writes, deletes, or listings.
+"""
 
 from __future__ import annotations
 
@@ -26,7 +30,7 @@ def split_s3_uri(uri: str) -> tuple[str, str]:
 
 
 class S3DataStore:
-    """Read/write project data under the configured S3 prefix.
+    """Read/write project data under the configured S3 prefix (boto3 only).
 
     Relative keys match the repo layout (e.g. ``data/knowledge/foo.json``,
     ``artifacts/indexes/faiss.index``). Local files under ``cache_dir`` are a
@@ -45,8 +49,15 @@ class S3DataStore:
 
     @property
     def client(self):
+        """Lazy boto3 S3 client (env credentials / instance role / shared config)."""
         if self._client is None:
-            self._client = boto3.client("s3")
+            region = (
+                os.environ.get("AWS_REGION")
+                or os.environ.get("AWS_DEFAULT_REGION")
+                or "us-east-1"
+            )
+            session = boto3.session.Session()
+            self._client = session.client("s3", region_name=region)
         return self._client
 
     def s3_key(self, relative: str) -> str:
@@ -93,6 +104,33 @@ class S3DataStore:
             token = response.get("NextContinuationToken")
         return sorted(keys)
 
+    def list_objects(self, relative_prefix: str = "") -> list[dict[str, Any]]:
+        """Return relative key + size + last_modified for objects under a prefix."""
+        prefix = self.s3_key(relative_prefix.lstrip("/"))
+        rows: list[dict[str, Any]] = []
+        token = None
+        while True:
+            kwargs: dict[str, Any] = {"Bucket": self.bucket, "Prefix": prefix}
+            if token:
+                kwargs["ContinuationToken"] = token
+            response = self.client.list_objects_v2(**kwargs)
+            for item in response.get("Contents", []) or []:
+                key = item["Key"]
+                if not key.startswith(self.prefix):
+                    continue
+                rel = key[len(self.prefix) :]
+                rows.append(
+                    {
+                        "key": rel,
+                        "size": int(item.get("Size", 0)),
+                        "last_modified": item.get("LastModified"),
+                    }
+                )
+            if not response.get("IsTruncated"):
+                break
+            token = response.get("NextContinuationToken")
+        return rows
+
     def read_bytes(self, relative: str) -> bytes:
         response = self.client.get_object(Bucket=self.bucket, Key=self.s3_key(relative))
         return response["Body"].read()
@@ -108,7 +146,6 @@ class S3DataStore:
         if content_type:
             kwargs["ContentType"] = content_type
         self.client.put_object(**kwargs)
-        # Keep cache coherent when present.
         dest = self.cache_path(relative)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(data)
@@ -120,6 +157,14 @@ class S3DataStore:
     def write_json(self, relative: str, payload: Any) -> str:
         body = json.dumps(payload, indent=2) + "\n"
         return self.write_bytes(relative, body.encode("utf-8"), content_type="application/json")
+
+    def ensure_prefix(self, relative_prefix: str) -> str:
+        """Create an empty prefix marker object (folder placeholder)."""
+        rel = relative_prefix.lstrip("/")
+        if not rel.endswith("/"):
+            rel += "/"
+        self.client.put_object(Bucket=self.bucket, Key=self.s3_key(rel), Body=b"")
+        return self.s3_uri_for(rel)
 
     def upload_file(self, local_path: Path | str, relative: str) -> str:
         local = Path(local_path)
@@ -160,6 +205,53 @@ class S3DataStore:
         for rel in keys:
             self.download_file(rel, force=force)
         return local_root
+
+    def delete(self, relative: str) -> str:
+        """Delete one object (or empty prefix marker)."""
+        key = self.s3_key(relative)
+        self.client.delete_object(Bucket=self.bucket, Key=key)
+        cached = self.cache_path(relative)
+        if cached.exists() and cached.is_file():
+            cached.unlink()
+        return self.s3_uri_for(relative)
+
+    def delete_keys(self, relatives: Iterable[str]) -> list[str]:
+        """Batch-delete relative keys with boto3 ``delete_objects`` (chunks of 1000)."""
+        deleted: list[str] = []
+        batch: list[dict[str, str]] = []
+
+        def flush() -> None:
+            nonlocal batch
+            if not batch:
+                return
+            response = self.client.delete_objects(
+                Bucket=self.bucket,
+                Delete={"Objects": batch, "Quiet": True},
+            )
+            errors = response.get("Errors") or []
+            if errors:
+                raise RuntimeError(f"S3 delete_objects errors: {errors[:5]}")
+            batch = []
+
+        for rel in relatives:
+            rel = rel.lstrip("/")
+            batch.append({"Key": self.s3_key(rel)})
+            deleted.append(rel)
+            cached = self.cache_path(rel)
+            if cached.exists() and cached.is_file():
+                cached.unlink()
+            if len(batch) >= 1000:
+                flush()
+        flush()
+        return deleted
+
+    def delete_prefix(self, relative_prefix: str = "") -> list[str]:
+        """Delete every object under a relative prefix (boto3 only)."""
+        rows = self.list_objects(relative_prefix)
+        keys = [row["key"] for row in rows]
+        # Also remove empty folder markers that list_keys skips when ending with "/".
+        # list_objects keeps them; delete_keys handles both.
+        return self.delete_keys(keys)
 
     def ensure_local(self, relative: str, force: bool = False) -> Path:
         if not self.exists(relative):
