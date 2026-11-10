@@ -29,7 +29,7 @@ DATA_PREFIXES = (
 
 
 def upload_repo_data(uri: str | None = None) -> None:
-    """Upload any leftover local data/artifacts trees into S3 (migration aid)."""
+    """Upload local data/artifacts trees into S3 (never code/docs/configs)."""
     store = get_store() if uri is None else __import__("backend.app.core.s3_store", fromlist=["S3DataStore"]).S3DataStore(uri)
     for folder in ("data", "artifacts"):
         base = ROOT / folder
@@ -48,8 +48,7 @@ def download_all(uri: str | None = None) -> None:
     store = get_store() if uri is None else __import__("backend.app.core.s3_store", fromlist=["S3DataStore"]).S3DataStore(uri)
     keys = store.list_keys("")
     for rel in keys:
-        # Skip non-data objects accidentally under the prefix.
-        if not (rel.startswith("data/") or rel.startswith("artifacts/") or rel.startswith("configs/") or rel.startswith("docs/")):
+        if not (rel.startswith("data/") or rel.startswith("artifacts/")):
             continue
         path = store.download_file(rel, force=True)
         print(f"download {store.s3_uri_for(rel)} -> {path}")
