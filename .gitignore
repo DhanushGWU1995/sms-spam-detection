@@ -40,3 +40,4 @@ frontend/.angular/
 *.zip
 
 .proposal_extract.txt
+tmp/
