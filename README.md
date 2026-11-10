@@ -60,6 +60,7 @@ backend/app/      FastAPI, NLP, RAG, investigation workflow
 frontend/         Angular UI (proxies /api → :8000)
 scripts/          setup_venv (uv sync) / pipeline / S3 helpers
 configs/          settings.yaml (includes s3_uri)
+docs/             architecture PPT, tech stack, project report
 pyproject.toml    project metadata + dependency list (source of truth for uv)
 uv.lock           locked versions for reproducible uv sync
 requirements.txt  exported from uv.lock (convenience / readers)
@@ -67,6 +68,9 @@ data/             .gitkeep placeholders only (real data lives in S3)
 artifacts/        .gitkeep placeholders only (real models/indexes live in S3)
 .venv/            created by uv sync (gitignored)
 ```
+
+Architecture materials: see [`docs/`](docs/) — especially `ScamShield_Architecture.pptx`, `ARCHITECTURE.md`, `TECH_STACK.md`, and `PROJECT_REPORT.md`.
+
 
 ## S3 layout (durable store)
 
