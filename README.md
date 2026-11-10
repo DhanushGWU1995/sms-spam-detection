@@ -1,84 +1,87 @@
-# SMS Spam Classifier
+# ScamShield US
 
-Course project: classify an SMS as spam or ham (a normal message).
+An agentic RAG-based consumer fraud and identity-theft intelligence system using open-source NLP and LLMs.
 
-We train three models on the same split of a combined SMS collection, then explain the predictions with LIME and SHAP. Qwen2.5-1.5B is called only when DistilBERT's confidence is weak.
+Deployment constraint: **AWS EC2 g5.xlarge + Amazon S3 only**. No Bedrock, Lambda, API Gateway, RDS, OpenSearch, or SageMaker.
 
-1. TF-IDF + logistic regression (baseline)
-2. GRU in PyTorch (RNN)
-3. Fine-tuned DistilBERT (transformer)
-4. Qwen2.5-1.5B, only when DistilBERT is close to its spam threshold
+## Open-source stack (free / current)
 
-Spam is the positive class. About 61% of the combined messages are ham, so accuracy by itself is still a weak summary. We compare spam precision, recall, F1, and PR-AUC.
+| Layer | Choice |
+|---|---|
+| Classifier baselines | scikit-learn TF-IDF + Logistic Regression / Linear SVM / Multinomial NB |
+| Transformer classifier | DistilBERT (`distilbert-base-uncased`) |
+| Embeddings | Sentence-Transformers `all-MiniLM-L6-v2` |
+| Lexical retrieval | BM25 (`rank_bm25`) |
+| Dense retrieval | FAISS (CPU) |
+| Local LLM | Qwen2.5 Instruct (Hugging Face, Apache 2.0) — start with **1.5B**, optional **7B 4-bit** if VRAM allows |
+| Agents | LangGraph |
+| API | FastAPI + Uvicorn |
+| UI | Angular 19 + TypeScript (`frontend/`) |
+| Storage | **Amazon S3 only** for data/models/indexes (EC2 keeps ephemeral cache) |
 
-## Dataset
+No paid model APIs are required.
 
-- Training file: `Code/sms_combined.csv`
-- Original UCI file, kept as downloaded: `Code/sms_spam.csv`
-- Sources: [UCI SMS Spam Collection](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) and the [Super SMS Dataset](https://github.com/smspamresearch/spstudy)
-- 67,709 unique messages: 41,390 ham (61.1%) and 26,319 spam (38.9%)
-- Columns: `Category` (`ham` or `spam`) and `Text`
+## Pipelines
 
-The Super SMS file was renamed to those two columns and merged with the UCI messages. A text that appears in both is stored once. Where the two sources disagreed (5 messages), we kept the UCI label. `sms+spam+collection.zip` is the original UCI download.
+1. **Consumer intelligence** — structured US fraud statistics (FTC / IC3 / BJS) and message classification.
+2. **Conversational intelligence** — hybrid RAG over official guidance + local LLM + supervisor agents.
 
-Please cite Almeida, Gómez Hidalgo, and Yamakami, "Contributions to the Study of SMS Spam Filtering," ACM DocEng 2011, and Salman, Ikram, and Kaafar, "Investigating Evasive Techniques in SMS Spam Filtering," IEEE Access 2024.
-
-## Layout
+## Repository layout
 
 ```
-Code/main.ipynb          training, plots, LIME, SHAP, Qwen comparison
-Code/app_deploy.py       streamlit demo
-Code/preprocess.py       text cleaning shared by the linear model, the GRU, and the app
-Code/inference.py        loads the saved models for the app
-Code/llm_cascade.py      Qwen cascade and the test-set comparison
-Code/sms_spam.csv        original UCI messages
-Code/sms_combined.csv    UCI plus Super SMS, the file the notebook loads
-Code/artifacts/          created when the notebook is run
-Group-Proposal/
-Final-Group-Presentation/
-Final-Group-Project-Report/
+backend/app/          FastAPI service, NLP, RAG, agents
+frontend/             Angular 19 TypeScript UI
+scripts/              data download, S3 sync, train, build index
+notebooks/            EDA and evaluation
+data/                 placeholder dirs only (.gitkeep) — durable data is in S3
+artifacts/            placeholder dirs only — models/indexes/metrics live in S3
+configs/              YAML settings (includes s3_uri)
+archive/sms_spam_v1/  previous SMS-spam course prototype (seed input only)
 ```
 
-## Setup
+## S3 is the data store
 
-Python 3.10 or newer.
+EC2 should keep **code only**. All datasets, knowledge docs, FAISS indexes, trained models, and metrics are written to / read from:
+
+```
+s3://dats-nlp/dhanush.mathivanan@gwu.edu/nlp-data/
+  data/raw/
+  data/processed/
+  data/knowledge/
+  data/provenance/
+  artifacts/models/
+  artifacts/indexes/
+  artifacts/metrics/
+  artifacts/viz/
+```
+
+Pipeline scripts running on EC2 write directly to that prefix. The FastAPI backend fetches objects from S3 into an ephemeral cache (`SCAMSHIELD_CACHE_DIR`, default `/tmp/scamshield-s3-cache`) for FAISS / joblib / DistilBERT, then serves the UI.
 
 ```bash
-pip install -r Code/requirements.txt
+# Seed 20+ knowledge docs into S3, then build FAISS chunks/index into S3
+python scripts/seed_knowledge_base.py
+python scripts/build_rag_index.py
 ```
 
-## How to run
-
-1. Open `Code/main.ipynb` and run all cells. `RUN_RNN`, `RUN_BERT`, `RUN_EXPLAIN`, and `RUN_LLM` can be set to `False` if you want to skip a stage. The first DistilBERT run downloads the pretrained weights. The LLM section downloads Qwen2.5-1.5B and writes `Code/artifacts/llm_metrics.csv`.
-
-   The notebook writes:
-
-   - `Code/artifacts/vectorizer.pkl`
-   - `Code/artifacts/logreg_model.pkl`
-   - `Code/artifacts/threshold.json`
-   - `Code/artifacts/gru.pt`
-   - `Code/artifacts/distilbert/`
-   - `Code/artifacts/metrics.csv`
-
-2. From the project folder:
+## Quick start (EC2)
 
 ```bash
-streamlit run Code/app_deploy.py
+cd ~/dl-venv/nlp_project_final
+
+# Reuse shared dl-venv torch/CUDA. Extra packages go into ./.vendor only.
+bash scripts/setup_venv.sh
+bash scripts/run_pipeline.sh   # all outputs go to S3
+
+# API (reads models/indexes/knowledge from S3)
+PYTHONPATH="$PWD:$PWD/.vendor" /home/ubuntu/dl-venv/bin/python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+
+# Angular TypeScript UI (separate terminal)
+cd frontend
+npm install
+npm start
+# open http://127.0.0.1:4200  (proxies /api to FastAPI :8000)
 ```
 
-The page shows the combined dataset counts and the ham and spam word clouds, then a text box and a model choice: hybrid, the traditional majority vote, logistic regression, the GRU, DistilBERT, or Qwen alone. Predict walks through that choice, marks confidence as weak or strong, and says whether Qwen is triggered. Below the response, the page shows test-set F1, precision, recall, accuracy, and the test confusion matrices for the three approaches. Those numbers come from `Code/artifacts/approach_reports.json`.
+## Safety
 
-## What we report
-
-For every model, on the same test set:
-
-- accuracy
-- spam precision, recall, and F1
-- PR-AUC
-- confusion matrix
-
-The spam threshold is chosen on the validation set, then applied to the test set.
-
-## Team
-
-Add our names here.
+ScamShield is educational decision support. It is not a law-enforcement determination, legal opinion, or guarantee that a message is safe or fraudulent. Agents never submit reports, contact alleged scammers, or access financial accounts.

@@ -1,14 +1,51 @@
 .DS_Store
 .idea/
-anaconda_projects/
+.vscode/
 __pycache__/
+*.py[cod]
 .ipynb_checkpoints/
-**/.ipynb_checkpoints/
 .venv/
+.venv-scamshield/
+.vendor/
 venv/
+.env
+.env.*
+*.pem
+.git_info.txt
 
-Code/artifacts/*.pkl
-!Code/artifacts/logreg_model.pkl
-!Code/artifacts/vectorizer.pkl
-Code/artifacts/*.pt
-Code/artifacts/distilbert/
+# Local/ephemeral data — durable copies live in S3
+artifacts/models/**
+!artifacts/models/.gitkeep
+artifacts/indexes/**
+!artifacts/indexes/.gitkeep
+data/raw/**
+!data/raw/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+data/knowledge/**
+!data/knowledge/.gitkeep
+
+# Frontend build/deps
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Model weights / large binaries (keep out of git)
+*.pt
+*.bin
+*.safetensors
+*.gguf
+*.pkl
+*.joblib
+*.zip
+
+# Archived prototype datasets/weights (code-only archive is fine)
+archive/**/artifacts/
+archive/**/*.csv
+archive/**/*.pkl
+archive/**/*.pt
+archive/**/*.safetensors
+archive/**/*.zip
+archive/**/__pycache__/
+
+.proposal_extract.txt

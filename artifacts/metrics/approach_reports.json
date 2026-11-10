@@ -1,0 +1,1478 @@
+{
+  "margin": 0.05,
+  "labels": [
+    "banking_impersonation",
+    "government_impersonation",
+    "identity_theft_attempt",
+    "investment_scam",
+    "legitimate",
+    "other_uncertain",
+    "phishing_spoofing"
+  ],
+  "order": [
+    "Traditional NLP",
+    "Advanced NLP",
+    "Hybrid NLP",
+    "LLM only",
+    "Hybrid + LLM"
+  ],
+  "primary_metric": "macro_f1",
+  "dataset_name": "UCI SMS Spam Collection + Super SMS Dataset (rebuilt merge)",
+  "datasets_used": [
+    {
+      "name": "UCI SMS Spam Collection",
+      "url": "https://archive.ics.uci.edu/dataset/228/sms+spam+collection",
+      "rows": 5160
+    },
+    {
+      "name": "Super SMS Dataset",
+      "url": "https://github.com/smspamresearch/spstudy",
+      "rows": 67008
+    }
+  ],
+  "comparison_split": "test",
+  "weak_confidence_rule": "DistilBERT confidence is weak when (P(top1) - P(top2)) <= margin. Margin is selected on validation to maximize Hybrid + LLM macro F1.",
+  "splits": {
+    "val": {
+      "messages": 6824,
+      "approaches": {
+        "Traditional NLP": {
+          "accuracy": 0.9775791324736225,
+          "macro_f1": 0.9512083566247325,
+          "weighted_f1": 0.9773703925880334,
+          "macro_precision": 0.9700332737914091,
+          "macro_recall": 0.9349546967691719,
+          "confusion": [
+            [
+              59,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              127,
+              0,
+              1,
+              2,
+              11,
+              3
+            ],
+            [
+              0,
+              0,
+              93,
+              0,
+              4,
+              19,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              59,
+              0,
+              2,
+              1
+            ],
+            [
+              0,
+              6,
+              3,
+              1,
+              4146,
+              23,
+              2
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              47,
+              1591,
+              11
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              14,
+              596
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 1.0,
+              "recall": 0.9833333333333333,
+              "f1-score": 0.9915966386554622,
+              "support": 60.0
+            },
+            "government_impersonation": {
+              "precision": 0.9477611940298507,
+              "recall": 0.8819444444444444,
+              "f1-score": 0.9136690647482014,
+              "support": 144.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9587628865979382,
+              "recall": 0.7948717948717948,
+              "f1-score": 0.8691588785046729,
+              "support": 117.0
+            },
+            "investment_scam": {
+              "precision": 0.9672131147540983,
+              "recall": 0.9516129032258065,
+              "f1-score": 0.959349593495935,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9873779471302692,
+              "recall": 0.9916287969385315,
+              "f1-score": 0.9894988066825776,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.958433734939759,
+              "recall": 0.9642424242424242,
+              "f1-score": 0.9613293051359516,
+              "support": 1650.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9706840390879479,
+              "recall": 0.9770491803278688,
+              "f1-score": 0.9738562091503268,
+              "support": 610.0
+            },
+            "accuracy": 0.9775791324736225,
+            "macro avg": {
+              "precision": 0.9700332737914091,
+              "recall": 0.9349546967691719,
+              "f1-score": 0.9512083566247325,
+              "support": 6824.0
+            },
+            "weighted avg": {
+              "precision": 0.9774883068922797,
+              "recall": 0.9775791324736225,
+              "f1-score": 0.9773703925880334,
+              "support": 6824.0
+            }
+          },
+          "messages": 6824,
+          "routed_to_llm": 0.0,
+          "description": "Majority vote of TF-IDF Logistic Regression / Naive Bayes / Linear SVM."
+        },
+        "Advanced NLP": {
+          "accuracy": 0.9832942555685815,
+          "macro_f1": 0.9526759880263482,
+          "weighted_f1": 0.9828511696607606,
+          "macro_precision": 0.9800532872549576,
+          "macro_recall": 0.9324383541568695,
+          "confusion": [
+            [
+              60,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              125,
+              0,
+              1,
+              0,
+              13,
+              5
+            ],
+            [
+              0,
+              0,
+              83,
+              0,
+              2,
+              31,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              61,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              0,
+              1,
+              4164,
+              14,
+              1
+            ],
+            [
+              0,
+              1,
+              2,
+              0,
+              29,
+              1611,
+              7
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              4,
+              606
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 60.0
+            },
+            "government_impersonation": {
+              "precision": 0.984251968503937,
+              "recall": 0.8680555555555556,
+              "f1-score": 0.922509225092251,
+              "support": 144.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9764705882352941,
+              "recall": 0.7094017094017094,
+              "f1-score": 0.8217821782178217,
+              "support": 117.0
+            },
+            "investment_scam": {
+              "precision": 0.9682539682539683,
+              "recall": 0.9838709677419355,
+              "f1-score": 0.976,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9926102502979738,
+              "recall": 0.9959339870844296,
+              "f1-score": 0.994269340974212,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.962940824865511,
+              "recall": 0.9763636363636363,
+              "f1-score": 0.9696057779115257,
+              "support": 1650.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9758454106280193,
+              "recall": 0.9934426229508196,
+              "f1-score": 0.9845653939886271,
+              "support": 610.0
+            },
+            "accuracy": 0.9832942555685815,
+            "macro avg": {
+              "precision": 0.9800532872549576,
+              "recall": 0.9324383541568695,
+              "f1-score": 0.9526759880263482,
+              "support": 6824.0
+            },
+            "weighted avg": {
+              "precision": 0.9833283420760338,
+              "recall": 0.9832942555685815,
+              "f1-score": 0.9828511696607606,
+              "support": 6824.0
+            }
+          },
+          "messages": 6824,
+          "routed_to_llm": 0.0,
+          "description": "DistilBERT fine-tuned classifier alone."
+        },
+        "Hybrid NLP": {
+          "accuracy": 0.9818288393903869,
+          "macro_f1": 0.9533795546466125,
+          "weighted_f1": 0.9815087070237557,
+          "macro_precision": 0.9755096561062988,
+          "macro_recall": 0.935799107683008,
+          "confusion": [
+            [
+              59,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              125,
+              0,
+              1,
+              0,
+              13,
+              5
+            ],
+            [
+              0,
+              0,
+              89,
+              0,
+              4,
+              23,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              61,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              2,
+              2,
+              2,
+              4161,
+              13,
+              1
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              40,
+              1602,
+              7
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              603
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 1.0,
+              "recall": 0.9833333333333333,
+              "f1-score": 0.9915966386554622,
+              "support": 60.0
+            },
+            "government_impersonation": {
+              "precision": 0.9765625,
+              "recall": 0.8680555555555556,
+              "f1-score": 0.9191176470588235,
+              "support": 144.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.967391304347826,
+              "recall": 0.7606837606837606,
+              "f1-score": 0.8516746411483254,
+              "support": 117.0
+            },
+            "investment_scam": {
+              "precision": 0.953125,
+              "recall": 0.9838709677419355,
+              "f1-score": 0.9682539682539683,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9895362663495838,
+              "recall": 0.9952164553934465,
+              "f1-score": 0.9923682327689005,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9662243667068757,
+              "recall": 0.9709090909090909,
+              "f1-score": 0.9685610640870617,
+              "support": 1650.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9757281553398058,
+              "recall": 0.9885245901639345,
+              "f1-score": 0.9820846905537459,
+              "support": 610.0
+            },
+            "accuracy": 0.9818288393903869,
+            "macro avg": {
+              "precision": 0.9755096561062988,
+              "recall": 0.935799107683008,
+              "f1-score": 0.9533795546466125,
+              "support": 6824.0
+            },
+            "weighted avg": {
+              "precision": 0.9817730131945974,
+              "recall": 0.9818288393903869,
+              "f1-score": 0.9815087070237557,
+              "support": 6824.0
+            }
+          },
+          "messages": 6824,
+          "routed_to_llm": 0.0,
+          "description": "Majority vote of traditional models + DistilBERT."
+        },
+        "LLM only": {
+          "accuracy": 0.11269050410316529,
+          "macro_f1": 0.06770474673509505,
+          "weighted_f1": 0.08397552320112535,
+          "macro_precision": 0.13548819349086513,
+          "macro_recall": 0.16469487571830763,
+          "confusion": [
+            [
+              6,
+              0,
+              0,
+              0,
+              1,
+              0,
+              53
+            ],
+            [
+              1,
+              0,
+              0,
+              2,
+              14,
+              1,
+              126
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              7,
+              0,
+              110
+            ],
+            [
+              3,
+              0,
+              0,
+              11,
+              9,
+              0,
+              39
+            ],
+            [
+              3,
+              0,
+              0,
+              6,
+              253,
+              137,
+              3782
+            ],
+            [
+              39,
+              0,
+              0,
+              55,
+              67,
+              3,
+              1486
+            ],
+            [
+              73,
+              1,
+              0,
+              14,
+              25,
+              1,
+              496
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.048,
+              "recall": 0.1,
+              "f1-score": 0.06486486486486487,
+              "support": 60.0
+            },
+            "government_impersonation": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 144.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 117.0
+            },
+            "investment_scam": {
+              "precision": 0.125,
+              "recall": 0.1774193548387097,
+              "f1-score": 0.14666666666666667,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.6728723404255319,
+              "recall": 0.06051183927290122,
+              "f1-score": 0.11103796357252578,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.02112676056338028,
+              "recall": 0.0018181818181818182,
+              "f1-score": 0.0033482142857142855,
+              "support": 1650.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.08141825344714379,
+              "recall": 0.8131147540983606,
+              "f1-score": 0.14801551775589375,
+              "support": 610.0
+            },
+            "accuracy": 0.11269050410316529,
+            "macro avg": {
+              "precision": 0.13548819349086513,
+              "recall": 0.16469487571830763,
+              "f1-score": 0.06770474673509505,
+              "support": 6824.0
+            },
+            "weighted avg": {
+              "precision": 0.4262065569829256,
+              "recall": 0.11269050410316529,
+              "f1-score": 0.08397552320112535,
+              "support": 6824.0
+            }
+          },
+          "messages": 6824,
+          "routed_to_llm": 1.0,
+          "description": "Local Qwen2.5-1.5B-Instruct zero-shot on every message."
+        },
+        "Hybrid + LLM": {
+          "accuracy": 0.981242672919109,
+          "macro_f1": 0.9521531596113179,
+          "weighted_f1": 0.9809049240218289,
+          "macro_precision": 0.9747478359352861,
+          "macro_recall": 0.9344231900239047,
+          "confusion": [
+            [
+              59,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              125,
+              0,
+              1,
+              0,
+              13,
+              5
+            ],
+            [
+              0,
+              0,
+              88,
+              0,
+              4,
+              23,
+              2
+            ],
+            [
+              0,
+              0,
+              0,
+              61,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              2,
+              2,
+              2,
+              4159,
+              13,
+              3
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              41,
+              1601,
+              7
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              7,
+              603
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 1.0,
+              "recall": 0.9833333333333333,
+              "f1-score": 0.9915966386554622,
+              "support": 60.0
+            },
+            "government_impersonation": {
+              "precision": 0.9765625,
+              "recall": 0.8680555555555556,
+              "f1-score": 0.9191176470588235,
+              "support": 144.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.967032967032967,
+              "recall": 0.7521367521367521,
+              "f1-score": 0.8461538461538461,
+              "support": 117.0
+            },
+            "investment_scam": {
+              "precision": 0.953125,
+              "recall": 0.9838709677419355,
+              "f1-score": 0.9682539682539683,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9892959086584205,
+              "recall": 0.9947381009327912,
+              "f1-score": 0.9920095408467502,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9662039831019915,
+              "recall": 0.9703030303030303,
+              "f1-score": 0.9682491684306017,
+              "support": 1650.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9710144927536232,
+              "recall": 0.9885245901639345,
+              "f1-score": 0.9796913078797725,
+              "support": 610.0
+            },
+            "accuracy": 0.981242672919109,
+            "macro avg": {
+              "precision": 0.9747478359352861,
+              "recall": 0.9344231900239047,
+              "f1-score": 0.9521531596113179,
+              "support": 6824.0
+            },
+            "weighted avg": {
+              "precision": 0.981193319745268,
+              "recall": 0.981242672919109,
+              "f1-score": 0.9809049240218289,
+              "support": 6824.0
+            }
+          },
+          "messages": 6824,
+          "routed_to_llm": 0.0007327080890973036,
+          "description": "Hybrid NLP first; call Qwen only when DistilBERT (top1-top2) margin is <= 0.05.",
+          "flips_correct": 0,
+          "flips_wrong": 5,
+          "routed_messages": 5
+        }
+      }
+    },
+    "test": {
+      "messages": 6825,
+      "approaches": {
+        "Traditional NLP": {
+          "accuracy": 0.9808058608058609,
+          "macro_f1": 0.9545760762196134,
+          "weighted_f1": 0.9807458824118397,
+          "macro_precision": 0.9610207566491908,
+          "macro_recall": 0.9486819148825872,
+          "confusion": [
+            [
+              57,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0
+            ],
+            [
+              3,
+              128,
+              0,
+              1,
+              0,
+              12,
+              1
+            ],
+            [
+              0,
+              0,
+              108,
+              0,
+              1,
+              4,
+              3
+            ],
+            [
+              0,
+              0,
+              0,
+              57,
+              0,
+              4,
+              1
+            ],
+            [
+              0,
+              6,
+              3,
+              2,
+              4146,
+              22,
+              2
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              37,
+              1598,
+              15
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              10,
+              600
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.95,
+              "recall": 0.9661016949152542,
+              "f1-score": 0.957983193277311,
+              "support": 59.0
+            },
+            "government_impersonation": {
+              "precision": 0.9552238805970149,
+              "recall": 0.8827586206896552,
+              "f1-score": 0.9175627240143369,
+              "support": 145.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9642857142857143,
+              "recall": 0.9310344827586207,
+              "f1-score": 0.9473684210526315,
+              "support": 116.0
+            },
+            "investment_scam": {
+              "precision": 0.9344262295081968,
+              "recall": 0.9193548387096774,
+              "f1-score": 0.926829268292683,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9906810035842294,
+              "recall": 0.9916287969385315,
+              "f1-score": 0.9911546736791776,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9678982434887947,
+              "recall": 0.9678982434887947,
+              "f1-score": 0.9678982434887947,
+              "support": 1651.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9646302250803859,
+              "recall": 0.9819967266775778,
+              "f1-score": 0.9732360097323601,
+              "support": 611.0
+            },
+            "accuracy": 0.9808058608058609,
+            "macro avg": {
+              "precision": 0.9610207566491908,
+              "recall": 0.9486819148825872,
+              "f1-score": 0.9545760762196134,
+              "support": 6825.0
+            },
+            "weighted avg": {
+              "precision": 0.9807729487594135,
+              "recall": 0.9808058608058609,
+              "f1-score": 0.9807458824118397,
+              "support": 6825.0
+            }
+          },
+          "messages": 6825,
+          "routed_to_llm": 0.0,
+          "description": "Majority vote of TF-IDF Logistic Regression / Naive Bayes / Linear SVM."
+        },
+        "Advanced NLP": {
+          "accuracy": 0.9869597069597069,
+          "macro_f1": 0.9580895991478066,
+          "weighted_f1": 0.9868022849668313,
+          "macro_precision": 0.9774908743692043,
+          "macro_recall": 0.9411623091630379,
+          "confusion": [
+            [
+              58,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              1,
+              133,
+              0,
+              0,
+              1,
+              10,
+              0
+            ],
+            [
+              0,
+              0,
+              96,
+              0,
+              1,
+              12,
+              7
+            ],
+            [
+              0,
+              0,
+              0,
+              55,
+              0,
+              6,
+              1
+            ],
+            [
+              0,
+              3,
+              0,
+              2,
+              4162,
+              14,
+              0
+            ],
+            [
+              0,
+              1,
+              2,
+              0,
+              22,
+              1625,
+              1
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              0,
+              3,
+              607
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.9830508474576272,
+              "recall": 0.9830508474576272,
+              "f1-score": 0.9830508474576272,
+              "support": 59.0
+            },
+            "government_impersonation": {
+              "precision": 0.9637681159420289,
+              "recall": 0.9172413793103448,
+              "f1-score": 0.9399293286219081,
+              "support": 145.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9795918367346939,
+              "recall": 0.8275862068965517,
+              "f1-score": 0.897196261682243,
+              "support": 116.0
+            },
+            "investment_scam": {
+              "precision": 0.9649122807017544,
+              "recall": 0.8870967741935484,
+              "f1-score": 0.9243697478991597,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9942666029622551,
+              "recall": 0.9954556326237742,
+              "f1-score": 0.9948607625194216,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9730538922155688,
+              "recall": 0.984251968503937,
+              "f1-score": 0.9786208973200843,
+              "support": 1651.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9837925445705025,
+              "recall": 0.9934533551554828,
+              "f1-score": 0.988599348534202,
+              "support": 611.0
+            },
+            "accuracy": 0.9869597069597069,
+            "macro avg": {
+              "precision": 0.9774908743692043,
+              "recall": 0.9411623091630379,
+              "f1-score": 0.9580895991478066,
+              "support": 6825.0
+            },
+            "weighted avg": {
+              "precision": 0.9869364804457139,
+              "recall": 0.9869597069597069,
+              "f1-score": 0.9868022849668313,
+              "support": 6825.0
+            }
+          },
+          "messages": 6825,
+          "routed_to_llm": 0.0,
+          "description": "DistilBERT fine-tuned classifier alone."
+        },
+        "Hybrid NLP": {
+          "accuracy": 0.9852014652014652,
+          "macro_f1": 0.9523974958582517,
+          "weighted_f1": 0.985055210293731,
+          "macro_precision": 0.9723330953508998,
+          "macro_recall": 0.9347055155265104,
+          "confusion": [
+            [
+              56,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1
+            ],
+            [
+              3,
+              129,
+              0,
+              0,
+              1,
+              11,
+              1
+            ],
+            [
+              0,
+              0,
+              99,
+              0,
+              1,
+              11,
+              5
+            ],
+            [
+              0,
+              0,
+              0,
+              55,
+              0,
+              6,
+              1
+            ],
+            [
+              0,
+              2,
+              1,
+              2,
+              4162,
+              13,
+              1
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              27,
+              1620,
+              3
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              7,
+              603
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.9491525423728814,
+              "recall": 0.9491525423728814,
+              "f1-score": 0.9491525423728814,
+              "support": 59.0
+            },
+            "government_impersonation": {
+              "precision": 0.9847328244274809,
+              "recall": 0.8896551724137931,
+              "f1-score": 0.9347826086956522,
+              "support": 145.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9801980198019802,
+              "recall": 0.853448275862069,
+              "f1-score": 0.9124423963133641,
+              "support": 116.0
+            },
+            "investment_scam": {
+              "precision": 0.9482758620689655,
+              "recall": 0.8870967741935484,
+              "f1-score": 0.9166666666666666,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.9928435114503816,
+              "recall": 0.9954556326237742,
+              "f1-score": 0.9941478562044668,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9706411024565608,
+              "recall": 0.9812235009085403,
+              "f1-score": 0.9759036144578314,
+              "support": 1651.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9804878048780488,
+              "recall": 0.9869067103109657,
+              "f1-score": 0.9836867862969005,
+              "support": 611.0
+            },
+            "accuracy": 0.9852014652014652,
+            "macro avg": {
+              "precision": 0.9723330953508998,
+              "recall": 0.9347055155265104,
+              "f1-score": 0.9523974958582517,
+              "support": 6825.0
+            },
+            "weighted avg": {
+              "precision": 0.9851967126150337,
+              "recall": 0.9852014652014652,
+              "f1-score": 0.985055210293731,
+              "support": 6825.0
+            }
+          },
+          "messages": 6825,
+          "routed_to_llm": 0.0,
+          "description": "Majority vote of traditional models + DistilBERT."
+        },
+        "LLM only": {
+          "accuracy": 0.10666666666666667,
+          "macro_f1": 0.05270340960992048,
+          "weighted_f1": 0.0756404837395162,
+          "macro_precision": 0.16264537500913434,
+          "macro_recall": 0.14302139760373353,
+          "confusion": [
+            [
+              3,
+              0,
+              0,
+              0,
+              2,
+              0,
+              54
+            ],
+            [
+              2,
+              1,
+              0,
+              2,
+              7,
+              1,
+              132
+            ],
+            [
+              2,
+              0,
+              0,
+              4,
+              3,
+              0,
+              107
+            ],
+            [
+              1,
+              0,
+              0,
+              5,
+              9,
+              1,
+              46
+            ],
+            [
+              0,
+              0,
+              1,
+              7,
+              221,
+              101,
+              3851
+            ],
+            [
+              36,
+              1,
+              0,
+              47,
+              67,
+              5,
+              1495
+            ],
+            [
+              88,
+              2,
+              0,
+              6,
+              21,
+              1,
+              493
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.022727272727272728,
+              "recall": 0.05084745762711865,
+              "f1-score": 0.031413612565445025,
+              "support": 59.0
+            },
+            "government_impersonation": {
+              "precision": 0.25,
+              "recall": 0.006896551724137931,
+              "f1-score": 0.013422818791946308,
+              "support": 145.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1-score": 0.0,
+              "support": 116.0
+            },
+            "investment_scam": {
+              "precision": 0.07042253521126761,
+              "recall": 0.08064516129032258,
+              "f1-score": 0.07518796992481203,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.6696969696969697,
+              "recall": 0.05285816790241569,
+              "f1-score": 0.09798270893371758,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.045871559633027525,
+              "recall": 0.0030284675953967293,
+              "f1-score": 0.005681818181818182,
+              "support": 1651.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.07979928779540305,
+              "recall": 0.806873977086743,
+              "f1-score": 0.14523493887170422,
+              "support": 611.0
+            },
+            "accuracy": 0.10666666666666667,
+            "macro avg": {
+              "precision": 0.16264537500913434,
+              "recall": 0.14302139760373353,
+              "f1-score": 0.05270340960992048,
+              "support": 6825.0
+            },
+            "weighted avg": {
+              "precision": 0.4346449005676421,
+              "recall": 0.10666666666666667,
+              "f1-score": 0.0756404837395162,
+              "support": 6825.0
+            }
+          },
+          "messages": 6825,
+          "routed_to_llm": 1.0,
+          "description": "Local Qwen2.5-1.5B-Instruct zero-shot on every message."
+        },
+        "Hybrid + LLM": {
+          "accuracy": 0.9852014652014652,
+          "macro_f1": 0.9522999310061746,
+          "weighted_f1": 0.9850561833417852,
+          "macro_precision": 0.9721395522038883,
+          "macro_recall": 0.9347055155265104,
+          "confusion": [
+            [
+              56,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1
+            ],
+            [
+              3,
+              129,
+              0,
+              0,
+              1,
+              11,
+              1
+            ],
+            [
+              0,
+              0,
+              99,
+              0,
+              1,
+              11,
+              5
+            ],
+            [
+              0,
+              0,
+              0,
+              55,
+              0,
+              6,
+              1
+            ],
+            [
+              0,
+              2,
+              1,
+              2,
+              4162,
+              13,
+              1
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              26,
+              1620,
+              4
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              7,
+              603
+            ]
+          ],
+          "report": {
+            "banking_impersonation": {
+              "precision": 0.9491525423728814,
+              "recall": 0.9491525423728814,
+              "f1-score": 0.9491525423728814,
+              "support": 59.0
+            },
+            "government_impersonation": {
+              "precision": 0.9847328244274809,
+              "recall": 0.8896551724137931,
+              "f1-score": 0.9347826086956522,
+              "support": 145.0
+            },
+            "identity_theft_attempt": {
+              "precision": 0.9801980198019802,
+              "recall": 0.853448275862069,
+              "f1-score": 0.9124423963133641,
+              "support": 116.0
+            },
+            "investment_scam": {
+              "precision": 0.9482758620689655,
+              "recall": 0.8870967741935484,
+              "f1-score": 0.9166666666666666,
+              "support": 62.0
+            },
+            "legitimate": {
+              "precision": 0.993080410403245,
+              "recall": 0.9954556326237742,
+              "f1-score": 0.9942666029622551,
+              "support": 4181.0
+            },
+            "other_uncertain": {
+              "precision": 0.9706411024565608,
+              "recall": 0.9812235009085403,
+              "f1-score": 0.9759036144578314,
+              "support": 1651.0
+            },
+            "phishing_spoofing": {
+              "precision": 0.9788961038961039,
+              "recall": 0.9869067103109657,
+              "f1-score": 0.9828850855745721,
+              "support": 611.0
+            },
+            "accuracy": 0.9852014652014652,
+            "macro avg": {
+              "precision": 0.9721395522038883,
+              "recall": 0.9347055155265104,
+              "f1-score": 0.9522999310061746,
+              "support": 6825.0
+            },
+            "weighted avg": {
+              "precision": 0.9851993419515839,
+              "recall": 0.9852014652014652,
+              "f1-score": 0.9850561833417852,
+              "support": 6825.0
+            }
+          },
+          "messages": 6825,
+          "routed_to_llm": 0.00014652014652014652,
+          "description": "Hybrid NLP first; call Qwen only when DistilBERT (top1-top2) margin is <= 0.05.",
+          "flips_correct": 0,
+          "flips_wrong": 1,
+          "routed_messages": 1
+        }
+      }
+    }
+  },
+  "summary": {
+    "primary_metric": "macro_f1",
+    "labels": [
+      "banking_impersonation",
+      "government_impersonation",
+      "identity_theft_attempt",
+      "investment_scam",
+      "legitimate",
+      "other_uncertain",
+      "phishing_spoofing"
+    ],
+    "order": [
+      "Traditional NLP",
+      "Advanced NLP",
+      "Hybrid NLP",
+      "LLM only",
+      "Hybrid + LLM"
+    ],
+    "dataset_name": "UCI SMS Spam Collection + Super SMS Dataset (rebuilt merge)",
+    "datasets_used": [
+      {
+        "name": "UCI SMS Spam Collection",
+        "url": "https://archive.ics.uci.edu/dataset/228/sms+spam+collection",
+        "rows": 5160
+      },
+      {
+        "name": "Super SMS Dataset",
+        "url": "https://github.com/smspamresearch/spstudy",
+        "rows": 67008
+      }
+    ],
+    "comparison_split": "test",
+    "rule": "Hybrid + LLM keeps the Hybrid NLP vote unless DistilBERT's (top1 - top2) probability gap is within the validation-chosen margin, in which case local Qwen may override.",
+    "margin": 0.05,
+    "validation_margins": [
+      {
+        "margin": 0.05,
+        "macro_f1": 0.9521531596113179,
+        "accuracy": 0.981242672919109,
+        "routed": 0.0007327080890973036
+      },
+      {
+        "margin": 0.1,
+        "macro_f1": 0.9518984623697252,
+        "accuracy": 0.9810961313012896,
+        "routed": 0.0011723329425556857
+      },
+      {
+        "margin": 0.15,
+        "macro_f1": 0.9513504818127594,
+        "accuracy": 0.9805099648300117,
+        "routed": 0.0017584994138335288
+      },
+      {
+        "margin": 0.2,
+        "macro_f1": 0.9512548871967644,
+        "accuracy": 0.9805099648300117,
+        "routed": 0.0019050410316529894
+      },
+      {
+        "margin": 0.3,
+        "macro_f1": 0.9502114057274967,
+        "accuracy": 0.9799237983587339,
+        "routed": 0.0033704572098475966
+      }
+    ],
+    "llm": {
+      "model": "Qwen/Qwen2.5-1.5B-Instruct",
+      "device": "cuda",
+      "seconds": 277.2509366709992,
+      "messages": 13649,
+      "input_tokens": 1266773,
+      "output_tokens": 91237,
+      "unparsed_val": 9,
+      "unparsed_test": 13,
+      "seconds_per_message": 0.02031291205736678
+    },
+    "label_note": "Binary ham/spam labels come from UCI + Super SMS. Multi-class spam subtypes are silver labels from heuristics. Document this limitation in the report.",
+    "test_messages": 6825,
+    "split_meta": {
+      "rows": 68243,
+      "train": 54594,
+      "val": 6824,
+      "test": 6825,
+      "binary_counts": {
+        "ham": 41808,
+        "spam": 26435
+      },
+      "merge": {
+        "uci_rows": 5160,
+        "super_sms_rows": 67008,
+        "overlap_texts": 3925,
+        "label_conflicts_kept_uci": 1,
+        "combined_rows": 68243
+      }
+    },
+    "routed_messages": 1,
+    "flips_correct": 0,
+    "flips_wrong": 1,
+    "traditional_nlp_macro_f1": 0.9545760762196134,
+    "advanced_nlp_macro_f1": 0.9580895991478066,
+    "hybrid_nlp_macro_f1": 0.9523974958582517,
+    "llm_only_macro_f1": 0.05270340960992048,
+    "hybrid_plus_llm_macro_f1": 0.9522999310061746
+  }
+}

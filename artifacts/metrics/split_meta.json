@@ -1,0 +1,47 @@
+{
+  "dataset_name": "UCI SMS Spam Collection + Super SMS Dataset (rebuilt merge)",
+  "datasets_used": [
+    {
+      "name": "UCI SMS Spam Collection",
+      "url": "https://archive.ics.uci.edu/dataset/228/sms+spam+collection",
+      "rows": 5160
+    },
+    {
+      "name": "Super SMS Dataset",
+      "url": "https://github.com/smspamresearch/spstudy",
+      "rows": 67008
+    }
+  ],
+  "merge": {
+    "uci_rows": 5160,
+    "super_sms_rows": 67008,
+    "overlap_texts": 3925,
+    "label_conflicts_kept_uci": 1,
+    "combined_rows": 68243
+  },
+  "merge_note": "Rebuilt merge from sms_spam.csv + super_sms_dataset.csv.",
+  "rows": 68243,
+  "train": 54594,
+  "val": 6824,
+  "test": 6825,
+  "split_mode": "stratified_by_multiclass_label",
+  "binary_counts": {
+    "ham": 41808,
+    "spam": 26435
+  },
+  "source_counts": {
+    "super_sms": 63083,
+    "uci_sms_spam": 5160
+  },
+  "label_counts": {
+    "legitimate": 41808,
+    "other_uncertain": 16507,
+    "phishing_spoofing": 6106,
+    "government_impersonation": 1444,
+    "identity_theft_attempt": 1164,
+    "investment_scam": 618,
+    "banking_impersonation": 596
+  },
+  "comparison_split": "test",
+  "note": "Comparison matrices use the held-out test split of the combined UCI + Super SMS corpus. Multi-class spam subtypes are silver labels from heuristics; document this."
+}

@@ -1,0 +1,105 @@
+{
+  "primary_metric": "macro_f1",
+  "labels": [
+    "banking_impersonation",
+    "government_impersonation",
+    "identity_theft_attempt",
+    "investment_scam",
+    "legitimate",
+    "other_uncertain",
+    "phishing_spoofing"
+  ],
+  "order": [
+    "Traditional NLP",
+    "Advanced NLP",
+    "Hybrid NLP",
+    "LLM only",
+    "Hybrid + LLM"
+  ],
+  "dataset_name": "UCI SMS Spam Collection + Super SMS Dataset (rebuilt merge)",
+  "datasets_used": [
+    {
+      "name": "UCI SMS Spam Collection",
+      "url": "https://archive.ics.uci.edu/dataset/228/sms+spam+collection",
+      "rows": 5160
+    },
+    {
+      "name": "Super SMS Dataset",
+      "url": "https://github.com/smspamresearch/spstudy",
+      "rows": 67008
+    }
+  ],
+  "comparison_split": "test",
+  "rule": "Hybrid + LLM keeps the Hybrid NLP vote unless DistilBERT's (top1 - top2) probability gap is within the validation-chosen margin, in which case local Qwen may override.",
+  "margin": 0.05,
+  "validation_margins": [
+    {
+      "margin": 0.05,
+      "macro_f1": 0.9521531596113179,
+      "accuracy": 0.981242672919109,
+      "routed": 0.0007327080890973036
+    },
+    {
+      "margin": 0.1,
+      "macro_f1": 0.9518984623697252,
+      "accuracy": 0.9810961313012896,
+      "routed": 0.0011723329425556857
+    },
+    {
+      "margin": 0.15,
+      "macro_f1": 0.9513504818127594,
+      "accuracy": 0.9805099648300117,
+      "routed": 0.0017584994138335288
+    },
+    {
+      "margin": 0.2,
+      "macro_f1": 0.9512548871967644,
+      "accuracy": 0.9805099648300117,
+      "routed": 0.0019050410316529894
+    },
+    {
+      "margin": 0.3,
+      "macro_f1": 0.9502114057274967,
+      "accuracy": 0.9799237983587339,
+      "routed": 0.0033704572098475966
+    }
+  ],
+  "llm": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "device": "cuda",
+    "seconds": 277.2509366709992,
+    "messages": 13649,
+    "input_tokens": 1266773,
+    "output_tokens": 91237,
+    "unparsed_val": 9,
+    "unparsed_test": 13,
+    "seconds_per_message": 0.02031291205736678
+  },
+  "label_note": "Binary ham/spam labels come from UCI + Super SMS. Multi-class spam subtypes are silver labels from heuristics. Document this limitation in the report.",
+  "test_messages": 6825,
+  "split_meta": {
+    "rows": 68243,
+    "train": 54594,
+    "val": 6824,
+    "test": 6825,
+    "binary_counts": {
+      "ham": 41808,
+      "spam": 26435
+    },
+    "merge": {
+      "uci_rows": 5160,
+      "super_sms_rows": 67008,
+      "overlap_texts": 3925,
+      "label_conflicts_kept_uci": 1,
+      "combined_rows": 68243
+    }
+  },
+  "routed_messages": 1,
+  "flips_correct": 0,
+  "flips_wrong": 1,
+  "traditional_nlp_macro_f1": 0.9545760762196134,
+  "advanced_nlp_macro_f1": 0.9580895991478066,
+  "hybrid_nlp_macro_f1": 0.9523974958582517,
+  "llm_only_macro_f1": 0.05270340960992048,
+  "hybrid_plus_llm_macro_f1": 0.9522999310061746
+}

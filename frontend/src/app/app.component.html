@@ -1,0 +1,445 @@
+<header class="hero">
+  <p class="eyebrow">Open-source · EC2 + S3 · Angular + TypeScript</p>
+  <h1>{{ title }}</h1>
+  <p class="lede">
+    Analyze a suspicious message, retrieve official guidance, and get safe next steps with citations.
+  </p>
+  <p class="status" [class.busy]="busy">{{ status }}</p>
+  @if (health) {
+    <p class="meta">
+      LLM: {{ health.llm }} · Embeddings: {{ health.embedding }} · RAG ready: {{ health.rag_ready }}
+    </p>
+  }
+</header>
+
+<main class="grid">
+  <section class="panel">
+    <h2>Message analysis</h2>
+    <p class="field-label">Try a sample (spam / ham × Traditional-only / escalate)</p>
+    <div class="sample-grid">
+      @for (sample of sampleMessages; track sample.id) {
+        <button
+          type="button"
+          class="sample-chip"
+          [class.active]="selectedSampleId === sample.id"
+          [class.spam]="sample.kind === 'spam'"
+          [class.ham]="sample.kind === 'ham'"
+          [class.escalate]="sample.route === 'escalate'"
+          (click)="useSample(sample.id)"
+          [disabled]="busy"
+        >
+          <span class="sample-title">{{ sample.title }}</span>
+          <span class="sample-blurb">{{ sample.blurb }}</span>
+        </button>
+      }
+    </div>
+
+    <label class="field-label" for="message">Suspicious message</label>
+    <textarea
+      id="message"
+      name="message"
+      rows="8"
+      [(ngModel)]="message"
+      (ngModelChange)="onMessageChange()"
+      placeholder="Paste a suspicious SMS, email, or message — or pick a sample above"
+    ></textarea>
+
+    <div class="row">
+      <button type="button" (click)="analyze()" [disabled]="busy || !canAnalyze()">Analyze</button>
+      <button
+        type="button"
+        class="secondary"
+        (click)="investigate()"
+        [disabled]="busy || !canInvestigate()"
+        [title]="investigateDisabledReason()"
+      >
+        Investigate with agents
+      </button>
+    </div>
+    @if (!canInvestigate() && !busy) {
+      <p class="muted hint">
+        @if (analysis && !isSpamPrediction()) {
+          Investigate is only for spam/scam predictions — the agent RAG covers fraud guidance, not ham/legitimate chats.
+        } @else {
+          Investigate needs a message, a question, and a completed Analyze that predicts spam/scam (not legitimate).
+        }
+      </p>
+    }
+
+    <label class="field-label" for="question">Optional question</label>
+    <input
+      id="question"
+      name="question"
+      type="text"
+      [(ngModel)]="question"
+      placeholder="What should I do if I already clicked the link?"
+    />
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Response</h2>
+
+    @if (analysis) {
+      <article class="card">
+        <h3>Classifier</h3>
+        <p>
+          <strong>{{ analysis.label }}</strong>
+          · {{ (analysis.confidence * 100).toFixed(1) }}%
+          · model: {{ analysis.model }}
+        </p>
+        @if (analysis.top_margin !== undefined) {
+          <p class="muted">
+            Model top1−top2 margin: {{ (analysis.top_margin * 100).toFixed(1) }}%
+            · weak threshold: {{ ((analysis.weak_confidence_margin || 0) * 100).toFixed(0) }}%
+            ·
+            @if (analysis.escalate_to_advanced) {
+              <span class="warn">Weak Traditional signal → Hybrid would use DistilBERT</span>
+            } @else {
+              <span>Confidence strong for current model path</span>
+            }
+          </p>
+        }
+        <p class="muted">{{ analysis.disclaimer }}</p>
+        @if (analysis.signals.urgency_cues.length || analysis.signals.impersonated_orgs.length) {
+          <p class="muted">
+            Signals:
+            {{ analysis.signals.urgency_cues.join(', ') }}
+            {{ analysis.signals.impersonated_orgs.join(', ') }}
+          </p>
+        }
+      </article>
+    }
+
+    @if (investigation) {
+      <article class="card">
+        <h3>Agent answer</h3>
+        <p class="answer">{{ investigation.answer }}</p>
+        <p class="muted">Model: {{ investigation.model }}</p>
+      </article>
+
+      @if (investigation.llm_input; as llmInput) {
+        <article class="card llm-input-card">
+          <h3>Qwen LLM inputs</h3>
+          <p class="muted">
+            Exact prompt payload sent to {{ llmInput.model || investigation.model }}
+            ({{ llmInput.retrieved_passage_count || 0 }} retrieved passages).
+          </p>
+          @if (llmInput.note) {
+            <p class="warn">{{ llmInput.note }}</p>
+          }
+          @if (llmInput.classification) {
+            <p class="muted">
+              Classifier fed in:
+              {{ llmInput.classification.label }}
+              @if (llmInput.classification.confidence !== undefined) {
+                ({{ (llmInput.classification.confidence * 100).toFixed(1) }}%)
+              }
+              · model {{ llmInput.classification.model }}
+            </p>
+          }
+          <details open>
+            <summary>System message</summary>
+            <pre class="prompt-block">{{ llmInput.system || '(none)' }}</pre>
+          </details>
+          <details open>
+            <summary>User message (message + label + question + RAG context)</summary>
+            <pre class="prompt-block">{{ llmInput.user || llmInput.consumer_question_bundle || '(none)' }}</pre>
+          </details>
+          @if (llmInput.chat_template_prompt) {
+            <details>
+              <summary>Chat-template prompt (tokenizer.apply_chat_template)</summary>
+              <pre class="prompt-block">{{ llmInput.chat_template_prompt }}</pre>
+            </details>
+          }
+        </article>
+      }
+
+      @if (investigation.citations.length) {
+        <article class="card">
+          <h3>Citations</h3>
+          <ul>
+            @for (citation of investigation.citations; track citation.n) {
+              <li>
+                [{{ citation.n }}]
+                {{ citation.agency }} — {{ citation.title }}
+                @if (citation.source_url) {
+                  <a [href]="citation.source_url" target="_blank" rel="noopener noreferrer">source</a>
+                }
+              </li>
+            }
+          </ul>
+        </article>
+      }
+
+      <article class="card">
+        <h3>Agent trace</h3>
+        <ol>
+          @for (step of investigation.trace; track step) {
+            <li>{{ step }}</li>
+          }
+        </ol>
+      </article>
+    }
+
+    @if (!analysis && !investigation) {
+      <p class="muted">Results will appear here.</p>
+    }
+  </section>
+</main>
+
+<section class="metrics">
+  <div class="panel">
+    <h2>Metrics</h2>
+    @if (!approachReports) {
+      <p class="muted">Loading metrics…</p>
+    } @else if (!approachReports.available) {
+      <p class="muted">{{ approachReports.note }}</p>
+    } @else {
+      <p class="muted">
+        Dataset:
+        {{
+          approachReports.dataset_name ||
+            'UCI SMS Spam Collection + Super SMS Dataset'
+        }}.
+        Comparison split: {{ approachReports.comparison_split || 'test' }}
+        ({{ approachReports.splits?.test?.messages || '—' }} messages).
+        Primary metric: macro F1.
+        @if ((approachReports.hybrid_margin ?? approachReports.margin) !== null && (approachReports.hybrid_margin ?? approachReports.margin) !== undefined) {
+          Weak-confidence margin (chosen on validation): {{ approachReports.hybrid_margin ?? approachReports.margin }}.
+        }
+      </p>
+      @if (approachReports.datasets_used?.length) {
+        <p class="muted">
+          SMS datasets:
+          @for (ds of approachReports.datasets_used; track ds.name; let last = $last) {
+            @if (ds.url) {
+              <a [href]="ds.url" target="_blank" rel="noopener noreferrer">{{ ds.name }}</a>
+            } @else {
+              <span>{{ ds.name }}</span>
+            }
+            @if (ds.rows) {
+              <span>({{ ds.rows | number }})</span>
+            }
+            <span>{{ last ? '.' : '; ' }}</span>
+          }
+        </p>
+      }
+      @if (knowledgeSources?.available && knowledgeSources?.documents?.length) {
+        <div class="rag-sources">
+          <p class="muted">
+            RAG agent knowledge sources
+            @if (knowledgeSources?.retrieved_date) {
+              <span>(retrieved {{ knowledgeSources?.retrieved_date }})</span>
+            }
+            — official public guidance pages used for citations:
+          </p>
+          <ul class="rag-source-list">
+            @for (doc of knowledgeSources!.documents!; track doc.doc_id || doc.source_url) {
+              <li>
+                <strong>{{ doc.agency || 'Source' }}</strong>
+                —
+                @if (doc.source_url) {
+                  <a [href]="doc.source_url" target="_blank" rel="noopener noreferrer">
+                    {{ doc.title || doc.source_url }}
+                  </a>
+                } @else {
+                  <span>{{ doc.title || doc.doc_id }}</span>
+                }
+                @if (doc.topic) {
+                  <span class="muted"> · topic: {{ doc.topic }}</span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      } @else if (knowledgeSources && !knowledgeSources.available) {
+        <p class="muted">RAG sources: {{ knowledgeSources.note }}</p>
+      }
+      @if (approachReports.hybrid_rule) {
+        <p class="muted">{{ approachReports.hybrid_rule }}</p>
+      }
+
+      <h3 class="section-title">Approach comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>Macro F1</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>Accuracy</th>
+              <th>% to Advanced</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (name of approachNames(); track name) {
+              <tr
+                [class.active]="selectedApproach === name"
+                (click)="selectedApproach = name"
+              >
+                <td>{{ name }}</td>
+                <td>{{ pct(testApproaches()![name].macro_f1) }}</td>
+                <td>{{ pct(testApproaches()![name].macro_precision) }}</td>
+                <td>{{ pct(testApproaches()![name].macro_recall) }}</td>
+                <td>{{ pct(testApproaches()![name].accuracy) }}</td>
+                <td>{{ pct((testApproaches()![name].routed_to_advanced ?? testApproaches()![name].routed_to_llm) || 0) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (selectedApproach && testApproaches()?.[selectedApproach]) {
+        <article class="card">
+          <h3>{{ selectedApproach }} · confusion matrix</h3>
+          <p class="muted">{{ testApproaches()![selectedApproach].description }}</p>
+          @if (selectedConfusion(); as matrix) {
+            <div class="table-wrap confusion">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    @for (label of approachReports.labels; track label; let j = $index) {
+                      <th title="{{ label }}">P{{ j }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of matrix; track $index; let i = $index) {
+                    <tr>
+                      <th title="{{ labelName(i) }}">T{{ i }}</th>
+                      @for (value of row; track $index) {
+                        <td
+                          [style.background]="
+                            'rgba(62, 207, 142,' + cellIntensity(value, matrix) + ')'
+                          "
+                        >
+                          {{ value }}
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="muted legend">
+              @for (label of approachReports.labels; track label; let i = $index) {
+                <span>T{{ i }}/P{{ i }} = {{ label }}</span>
+              }
+            </p>
+          }
+        </article>
+
+        <article class="card">
+          <h3>{{ selectedApproach }} · per-label F1 &amp; confusion counts</h3>
+          <p class="muted">
+            One-vs-rest true positive / false positive / false negative / true negative for each label,
+            with precision, recall, and F1.
+          </p>
+          <div class="table-wrap">
+            <table class="label-metrics">
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>TP</th>
+                  <th>FP</th>
+                  <th>FN</th>
+                  <th>TN</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1</th>
+                  <th>Support</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of selectedLabelMetrics(); track row.label) {
+                  <tr>
+                    <td class="label-cell">{{ row.label }}</td>
+                    <td>{{ row.tp }}</td>
+                    <td>{{ row.fp }}</td>
+                    <td>{{ row.fn }}</td>
+                    <td>{{ row.tn }}</td>
+                    <td>{{ pct(row.precision) }}</td>
+                    <td>{{ pct(row.recall) }}</td>
+                    <td><strong>{{ pct(row.f1) }}</strong></td>
+                    <td>{{ row.support }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </article>
+      }
+    }
+  </div>
+
+  <div class="panel viz-panel">
+    <h2>Spam / ham attention</h2>
+    @if (!dashboardViz) {
+      <p class="muted">Loading visualizations…</p>
+    } @else if (!dashboardViz.available) {
+      <p class="muted">{{ dashboardViz.note }}</p>
+    } @else {
+      @if (dashboardViz.binary_mix) {
+        <p class="muted">
+          Training mix:
+          spam {{ dashboardViz.binary_mix.spam | number }} ·
+          ham {{ dashboardViz.binary_mix.ham | number }}.
+        </p>
+      }
+      <p class="muted">{{ dashboardViz.attention_terms?.note }}</p>
+
+      <div class="cloud-grid">
+        <article class="card cloud-card">
+          <h3>Spam word cloud</h3>
+          @if (spamCloudSrc(); as src) {
+            <img [src]="src" alt="Spam word cloud" class="cloud-img" />
+          } @else {
+            <p class="muted">Spam word cloud not available yet.</p>
+          }
+          @if (spamTerms().length) {
+            <div class="term-list">
+              @for (term of spamTerms(); track term.term) {
+                <div class="term-row">
+                  <span class="term-name">{{ term.term }}</span>
+                  <span class="term-bar spam" [style.width.%]="termBarWidth(term, spamTerms())"></span>
+                  <span class="term-meta">{{ (term.share * 100).toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+          }
+        </article>
+
+        <article class="card cloud-card">
+          <h3>Ham word cloud</h3>
+          @if (hamCloudSrc(); as src) {
+            <img [src]="src" alt="Ham word cloud" class="cloud-img" />
+          } @else {
+            <p class="muted">Ham word cloud not available yet.</p>
+          }
+          @if (hamTerms().length) {
+            <div class="term-list">
+              @for (term of hamTerms(); track term.term) {
+                <div class="term-row">
+                  <span class="term-name">{{ term.term }}</span>
+                  <span class="term-bar ham" [style.width.%]="termBarWidth(term, hamTerms())"></span>
+                  <span class="term-meta">{{ (term.share * 100).toFixed(1) }}%</span>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      </div>
+    }
+  </div>
+</section>
+
+<footer>
+  Educational decision support only. Not a legal, financial, or law-enforcement determination.
+  Frontend: Angular TypeScript. Models: DistilBERT · MiniLM · BM25/FAISS · Qwen2.5 Instruct (local, free).
+</footer>

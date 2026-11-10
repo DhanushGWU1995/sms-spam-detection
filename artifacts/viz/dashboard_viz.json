@@ -1,0 +1,280 @@
+{
+  "available": true,
+  "wordclouds": {
+    "spam_wordcloud": "/api/viz/files/spam_wordcloud.png",
+    "ham_wordcloud": "/api/viz/files/ham_wordcloud.png"
+  },
+  "attention_terms": {
+    "spam": [],
+    "ham": [],
+    "note": "Training CSV not present locally; attention terms will be empty until scripts/build_dashboard_viz.py is run where messages_train.csv exists."
+  },
+  "label_mix": [],
+  "binary_mix": {
+    "spam": 0,
+    "ham": 0
+  },
+  "geo": {
+    "available": true,
+    "source": "Educational FTC-style state complaint intensity overlay",
+    "limitations": "The SMS training corpus has almost no usable US state fields, so this map is NOT derived from message labels. It is an educational geographic overlay of relative consumer-fraud / ID-theft / scam report intensity patterns for dashboard storytelling.",
+    "metric": "relative_complaint_intensity_0_to_100",
+    "states": [
+      {
+        "state": "AK",
+        "intensity": 12,
+        "bucket": "low"
+      },
+      {
+        "state": "AL",
+        "intensity": 28,
+        "bucket": "low"
+      },
+      {
+        "state": "AR",
+        "intensity": 24,
+        "bucket": "low"
+      },
+      {
+        "state": "AZ",
+        "intensity": 48,
+        "bucket": "medium"
+      },
+      {
+        "state": "CA",
+        "intensity": 100,
+        "bucket": "very_high"
+      },
+      {
+        "state": "CO",
+        "intensity": 42,
+        "bucket": "medium"
+      },
+      {
+        "state": "CT",
+        "intensity": 34,
+        "bucket": "medium"
+      },
+      {
+        "state": "DC",
+        "intensity": 26,
+        "bucket": "low"
+      },
+      {
+        "state": "DE",
+        "intensity": 18,
+        "bucket": "low"
+      },
+      {
+        "state": "FL",
+        "intensity": 92,
+        "bucket": "very_high"
+      },
+      {
+        "state": "GA",
+        "intensity": 58,
+        "bucket": "high"
+      },
+      {
+        "state": "HI",
+        "intensity": 16,
+        "bucket": "low"
+      },
+      {
+        "state": "IA",
+        "intensity": 22,
+        "bucket": "low"
+      },
+      {
+        "state": "ID",
+        "intensity": 20,
+        "bucket": "low"
+      },
+      {
+        "state": "IL",
+        "intensity": 55,
+        "bucket": "high"
+      },
+      {
+        "state": "IN",
+        "intensity": 36,
+        "bucket": "medium"
+      },
+      {
+        "state": "KS",
+        "intensity": 23,
+        "bucket": "low"
+      },
+      {
+        "state": "KY",
+        "intensity": 30,
+        "bucket": "medium"
+      },
+      {
+        "state": "LA",
+        "intensity": 33,
+        "bucket": "medium"
+      },
+      {
+        "state": "MA",
+        "intensity": 44,
+        "bucket": "medium"
+      },
+      {
+        "state": "MD",
+        "intensity": 40,
+        "bucket": "medium"
+      },
+      {
+        "state": "ME",
+        "intensity": 17,
+        "bucket": "low"
+      },
+      {
+        "state": "MI",
+        "intensity": 49,
+        "bucket": "medium"
+      },
+      {
+        "state": "MN",
+        "intensity": 35,
+        "bucket": "medium"
+      },
+      {
+        "state": "MO",
+        "intensity": 37,
+        "bucket": "medium"
+      },
+      {
+        "state": "MS",
+        "intensity": 25,
+        "bucket": "low"
+      },
+      {
+        "state": "MT",
+        "intensity": 14,
+        "bucket": "low"
+      },
+      {
+        "state": "NC",
+        "intensity": 52,
+        "bucket": "medium"
+      },
+      {
+        "state": "ND",
+        "intensity": 11,
+        "bucket": "low"
+      },
+      {
+        "state": "NE",
+        "intensity": 19,
+        "bucket": "low"
+      },
+      {
+        "state": "NH",
+        "intensity": 18,
+        "bucket": "low"
+      },
+      {
+        "state": "NJ",
+        "intensity": 50,
+        "bucket": "medium"
+      },
+      {
+        "state": "NM",
+        "intensity": 27,
+        "bucket": "low"
+      },
+      {
+        "state": "NV",
+        "intensity": 46,
+        "bucket": "medium"
+      },
+      {
+        "state": "NY",
+        "intensity": 88,
+        "bucket": "very_high"
+      },
+      {
+        "state": "OH",
+        "intensity": 54,
+        "bucket": "medium"
+      },
+      {
+        "state": "OK",
+        "intensity": 29,
+        "bucket": "low"
+      },
+      {
+        "state": "OR",
+        "intensity": 38,
+        "bucket": "medium"
+      },
+      {
+        "state": "PA",
+        "intensity": 57,
+        "bucket": "high"
+      },
+      {
+        "state": "RI",
+        "intensity": 16,
+        "bucket": "low"
+      },
+      {
+        "state": "SC",
+        "intensity": 39,
+        "bucket": "medium"
+      },
+      {
+        "state": "SD",
+        "intensity": 12,
+        "bucket": "low"
+      },
+      {
+        "state": "TN",
+        "intensity": 41,
+        "bucket": "medium"
+      },
+      {
+        "state": "TX",
+        "intensity": 95,
+        "bucket": "very_high"
+      },
+      {
+        "state": "UT",
+        "intensity": 31,
+        "bucket": "medium"
+      },
+      {
+        "state": "VA",
+        "intensity": 47,
+        "bucket": "medium"
+      },
+      {
+        "state": "VT",
+        "intensity": 13,
+        "bucket": "low"
+      },
+      {
+        "state": "WA",
+        "intensity": 45,
+        "bucket": "medium"
+      },
+      {
+        "state": "WI",
+        "intensity": 34,
+        "bucket": "medium"
+      },
+      {
+        "state": "WV",
+        "intensity": 21,
+        "bucket": "low"
+      },
+      {
+        "state": "WY",
+        "intensity": 10,
+        "bucket": "low"
+      }
+    ]
+  }
+}
