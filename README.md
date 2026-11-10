@@ -14,6 +14,42 @@ Open-source agentic RAG assistant for consumer fraud / identity-theft education.
 | Agents | Deterministic supervisor pipeline in FastAPI |
 | API / UI | FastAPI + Angular TypeScript |
 | Storage | S3 for all data/models/indexes via **boto3 only** (EC2 caches ephemerally; no AWS CLI) |
+| Python env | **uv** → project `.venv` via `scripts/setup_venv.sh` (no shared `dl-venv` required) |
+
+---
+
+## Quick start (new EC2)
+
+```bash
+# 1) Clone
+cd ~
+git clone https://github.com/DhanushGWU1995/sms-spam-detection.git nlp_project_final
+cd nlp_project_final
+
+# 2) AWS credentials (course SSO / STS)
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_SESSION_TOKEN="..."
+export AWS_DEFAULT_REGION="us-east-1"
+
+# 3) Install uv + create .venv + install all pipeline deps (CUDA torch if GPU present)
+bash scripts/setup_venv.sh
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
+
+# 4a) If S3 already has models/index/metrics (this course prefix does): skip rebuild
+# 4b) Otherwise rebuild everything into S3:
+# bash scripts/run_pipeline.sh
+
+# 5) API
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+
+# 6) UI (other terminal)
+cd frontend && npm install && npm start
+# http://127.0.0.1:4200  (or SSH tunnel from your laptop)
+```
+
+`setup_venv.sh` is the supported path for a blank machine. It installs `uv` if missing, creates `.venv` with Python 3.11, installs GPU/CPU PyTorch, then `uv pip install -r requirements.txt` and the spaCy model.
 
 ---
 
@@ -22,10 +58,11 @@ Open-source agentic RAG assistant for consumer fraud / identity-theft education.
 ```
 backend/app/   FastAPI, NLP, RAG, investigation workflow
 frontend/      Angular UI (proxies /api → :8000)
-scripts/       seed / prepare / train / index / evaluate / viz / S3 helpers
+scripts/       setup_venv (uv) / seed / prepare / train / index / evaluate / viz / S3 helpers
 configs/       settings.yaml (includes s3_uri)
 data/          .gitkeep placeholders only (real data lives in S3)
 artifacts/     .gitkeep placeholders only (real models/indexes live in S3)
+.venv/         created locally by scripts/setup_venv.sh (gitignored)
 ```
 
 ## S3 layout (durable store)
@@ -116,14 +153,25 @@ export SCAMSHIELD_CACHE_DIR="/tmp/scamshield-s3-cache"
 
 ## 3) Install Python deps with **uv** (fresh EC2)
 
-`scripts/setup_venv.sh` installs `uv` if needed, creates `.venv` (Python 3.11), installs CUDA PyTorch when a GPU is present, then installs all of `requirements.txt`, plus the spaCy `en_core_web_sm` model.
+**Recommended (one command):**
 
 ```bash
 cd ~/nlp_project_final
 bash scripts/setup_venv.sh
+source .venv/bin/activate
+export PYTHONPATH="$PWD"
 ```
 
-Equivalent manual commands:
+What that script does:
+
+1. Installs [`uv`](https://github.com/astral-sh/uv) into `~/.local/bin` if it is not already on `PATH`
+2. `uv python install 3.11` and `uv venv --python 3.11 .venv`
+3. Installs **CUDA PyTorch** (`cu124`) when `nvidia-smi` works; otherwise CPU PyTorch
+4. `uv pip install -r requirements.txt` (FastAPI, transformers, sentence-transformers, faiss, boto3, sklearn, wordcloud, …)
+5. `python -m spacy download en_core_web_sm`
+6. Smoke-imports torch / fastapi / faiss / boto3 / spacy
+
+**Manual equivalent** (same steps the script runs):
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -133,20 +181,22 @@ uv python install 3.11
 uv venv --python 3.11 .venv
 source .venv/bin/activate
 
-# GPU EC2 (g5 / CUDA 12.4 wheels). On CPU-only hosts omit this line;
-# setup_venv.sh already chooses CPU torch automatically.
+# GPU EC2 (g5). On CPU-only hosts omit this line.
 uv pip install torch --index-url https://download.pytorch.org/whl/cu124
 
 uv pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+export PYTHONPATH="$PWD"
 ```
 
-Activate in every new shell before running pipeline / API:
+Activate in **every new shell** before pipeline / API:
 
 ```bash
 source .venv/bin/activate
 export PYTHONPATH="$PWD"
 ```
+
+`scripts/run_pipeline.sh` and the uvicorn command below prefer `.venv/bin/python` automatically when that venv exists.
 
 Quick S3 check:
 
@@ -154,7 +204,7 @@ Quick S3 check:
 python scripts/sync_s3.py --list
 ```
 
-CPU-only torch (no NVIDIA):
+CPU-only torch (no NVIDIA / force CPU wheels):
 
 ```bash
 SKIP_CUDA_TORCH=1 bash scripts/setup_venv.sh
