@@ -1,7 +1,4 @@
-"""Supervisor-style agent workflow for fraud investigation (open-source LangGraph optional).
-
-Falls back to a deterministic pipeline if LangGraph is unavailable.
-"""
+"""Supervisor-style agent workflow for fraud investigation."""
 
 from __future__ import annotations
 
@@ -175,36 +172,3 @@ def investigate(message: str = "", question: str = "") -> dict[str, Any]:
             "read_only_sources": True,
         },
     }
-
-
-def build_langgraph_app():
-    """Optional LangGraph wiring when the package is installed."""
-    try:
-        from langgraph.graph import END, StateGraph
-    except Exception as exc:  # pragma: no cover
-        raise RuntimeError("langgraph is not available") from exc
-
-    def fraud_node(state: InvestigationState) -> InvestigationState:
-        state["classification"] = _get_classifier().predict(state.get("message") or state.get("question", ""))
-        state.setdefault("trace", []).append("langgraph:fraud_detection")
-        return state
-
-    def retrieve_node(state: InvestigationState) -> InvestigationState:
-        state["retrieval"] = _get_retriever().search(state.get("question") or state.get("message", ""), top_k=5)
-        state.setdefault("trace", []).append("langgraph:knowledge_retrieval")
-        return state
-
-    def assist_node(state: InvestigationState) -> InvestigationState:
-        state["draft"] = generate_answer(state.get("question", ""), state.get("retrieval", []))
-        state.setdefault("trace", []).append("langgraph:consumer_assistance")
-        return state
-
-    graph = StateGraph(InvestigationState)
-    graph.add_node("fraud", fraud_node)
-    graph.add_node("retrieve", retrieve_node)
-    graph.add_node("assist", assist_node)
-    graph.set_entry_point("fraud")
-    graph.add_edge("fraud", "retrieve")
-    graph.add_edge("retrieve", "assist")
-    graph.add_edge("assist", END)
-    return graph.compile()

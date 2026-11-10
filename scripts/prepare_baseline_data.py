@@ -15,7 +15,6 @@ labels from heuristics and are clearly marked in metadata.
 from __future__ import annotations
 
 import json
-import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -28,18 +27,19 @@ from backend.app.nlp.features import extract_signals
 ROOT = Path(__file__).resolve().parents[1]
 SEED = 42
 
-CODE_CANDIDATES = [
-    ROOT / "archive" / "sms_spam_v1" / "Code",
-    ROOT / "Code",
-]
-
 
 def _find(*names: str) -> Path | None:
-    for folder in CODE_CANDIDATES:
-        for name in names:
-            path = folder / name
-            if path.exists():
-                return path
+    """Resolve a dataset file from S3 data/raw (preferred) or a local seed path."""
+    settings = get_settings()
+    store = get_store()
+    raw_key = settings.data_raw_key.rstrip("/")
+    for name in names:
+        relative = f"{raw_key}/{name}"
+        if store.exists(relative):
+            return store.ensure_local(relative)
+        local = ROOT / "data" / "raw" / name
+        if local.exists():
+            return local
     return None
 
 
@@ -81,17 +81,9 @@ def load_uci() -> pd.DataFrame:
         frame["source"] = "uci_sms_spam"
         return frame[["text", "binary_label", "source"]].reset_index(drop=True)
 
-    zip_path = ROOT / "archive" / "sms_spam_v1" / "sms+spam+collection.zip"
-    if zip_path.exists():
-        with zipfile.ZipFile(zip_path) as archive:
-            member = next(name for name in archive.namelist() if name.endswith("SMSSpamCollection"))
-            with archive.open(member) as handle:
-                frame = pd.read_csv(handle, sep="\t", header=None, names=["binary_label", "text"])
-        frame["binary_label"] = _normalize_binary(frame["binary_label"])
-        frame["source"] = "uci_sms_spam"
-        return frame[["text", "binary_label", "source"]].dropna().reset_index(drop=True)
-
-    raise FileNotFoundError("Could not find UCI SMS Spam Collection (sms_spam.csv or zip).")
+    raise FileNotFoundError(
+        "Could not find UCI SMS Spam Collection. Upload sms_spam.csv to S3 data/raw/ first."
+    )
 
 
 def load_super_sms() -> pd.DataFrame:
@@ -188,12 +180,12 @@ def main() -> None:
     work_raw = store.work_dir(raw_key)
     work_out = store.work_dir(out_key)
 
-    # Seed raw CSV copies into S3 when present in the code checkout (archive/).
+    # If raw CSVs already live in S3, reuse them; otherwise require data/raw uploads.
     for name in ("sms_spam.csv", "super_sms_dataset.csv", "sms_combined.csv"):
-        local = _find(name)
-        if local is not None:
-            uri = store.upload_file(local, f"{raw_key}/{name}")
-            print("uploaded raw", uri)
+        relative = f"{raw_key}/{name}"
+        local = ROOT / "data" / "raw" / name
+        if local.exists() and not store.exists(relative):
+            print("uploaded raw", store.upload_file(local, relative))
 
     uci = load_uci()
     super_sms = load_super_sms()

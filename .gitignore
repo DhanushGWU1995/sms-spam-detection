@@ -39,13 +39,4 @@ frontend/.angular/
 *.joblib
 *.zip
 
-# Archived prototype datasets/weights (code-only archive is fine)
-archive/**/artifacts/
-archive/**/*.csv
-archive/**/*.pkl
-archive/**/*.pt
-archive/**/*.safetensors
-archive/**/*.zip
-archive/**/__pycache__/
-
 .proposal_extract.txt

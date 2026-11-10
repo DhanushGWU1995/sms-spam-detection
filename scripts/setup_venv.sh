@@ -24,12 +24,6 @@ mkdir -p "$VENDOR"
 export PYTHONPATH="$ROOT:$VENDOR${PYTHONPATH:+:$PYTHONPATH}"
 
 need=()
-for mod in fastapi uvicorn pydantic_settings yaml sentence_transformers faiss rank_bm25 boto3 langgraph bs4 httpx spacy; do
-  if ! "$DL_PY" -c "import $mod" >/dev/null 2>&1; then
-    need+=("$mod")
-  fi
-done
-
 pkgs=()
 "$DL_PY" -c "import fastapi" >/dev/null 2>&1 || pkgs+=(fastapi "uvicorn[standard]" python-multipart)
 "$DL_PY" -c "import pydantic_settings" >/dev/null 2>&1 || pkgs+=(pydantic-settings)
@@ -38,7 +32,6 @@ pkgs=()
 "$DL_PY" -c "import faiss" >/dev/null 2>&1 || pkgs+=(faiss-cpu)
 "$DL_PY" -c "import rank_bm25" >/dev/null 2>&1 || pkgs+=(rank-bm25)
 "$DL_PY" -c "import boto3" >/dev/null 2>&1 || pkgs+=(boto3)
-"$DL_PY" -c "import langgraph" >/dev/null 2>&1 || pkgs+=(langgraph langchain-core)
 "$DL_PY" -c "import bs4" >/dev/null 2>&1 || pkgs+=(beautifulsoup4 lxml)
 "$DL_PY" -c "import httpx" >/dev/null 2>&1 || pkgs+=(httpx)
 "$DL_PY" -c "import spacy" >/dev/null 2>&1 || pkgs+=(spacy)
