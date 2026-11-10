@@ -1,32 +1,27 @@
 #!/usr/bin/env bash
-# Create a project-local Python env with uv and install everything needed
-# to run the full ScamShield pipeline + API on a fresh EC2 (or laptop).
+# Bootstrap the project env with uv sync from pyproject.toml (+ uv.lock).
 #
-# Fresh EC2 (recommended):
-#   cd ~/nlp_project_final   # or wherever you cloned the repo
+# Fresh EC2:
+#   cd ~/nlp_project_final
 #   bash scripts/setup_venv.sh
+#   source .venv/bin/activate
+#   export PYTHONPATH="$PWD"
 #
 # Manual equivalent:
 #   curl -LsSf https://astral.sh/uv/install.sh | sh
 #   export PATH="$HOME/.local/bin:$PATH"
 #   uv python install 3.11
-#   uv venv --python 3.11 .venv
+#   uv sync          # installs deps from pyproject.toml / uv.lock into .venv
 #   source .venv/bin/activate
-#   # GPU torch (g5 / CUDA). Skip on CPU-only machines — setup detects this.
-#   uv pip install torch --index-url https://download.pytorch.org/whl/cu124
-#   uv pip install -r requirements.txt
 #   python -m spacy download en_core_web_sm
 #
-# Then always:
-#   source .venv/bin/activate
-#   export PYTHONPATH="$PWD"
+# CPU-only (skip CUDA torch index on Linux):
+#   SKIP_CUDA_TORCH=1 bash scripts/setup_venv.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VENV_DIR="${VENV_DIR:-$ROOT/.venv}"
 PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
-TORCH_CUDA_INDEX="${TORCH_CUDA_INDEX:-https://download.pytorch.org/whl/cu124}"
 
 echo "==> Ensuring uv is installed"
 if ! command -v uv >/dev/null 2>&1; then
@@ -39,32 +34,47 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 echo "uv $(uv --version)"
 
-echo "==> Creating venv at ${VENV_DIR} (Python ${PYTHON_VERSION})"
-uv python install "${PYTHON_VERSION}" >/dev/null
-uv venv --python "${PYTHON_VERSION}" "${VENV_DIR}"
+if [[ ! -f "$ROOT/pyproject.toml" ]]; then
+  echo "Missing pyproject.toml in $ROOT"
+  exit 1
+fi
+
+# Optional: force CPU torch by temporarily ignoring the CUDA index source.
+# (Default pyproject.toml pins Linux x86_64 torch to the cu124 index.)
+export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$ROOT/.venv}"
+
+if [[ "${SKIP_CUDA_TORCH:-0}" == "1" ]]; then
+  echo "==> SKIP_CUDA_TORCH=1 — syncing with default PyPI torch (CPU)"
+  # Override torch source to PyPI for this run via env-less approach:
+  # rewrite marker temporarily is heavy; instead unset CUDA preference by using
+  # UV_OVERRIDE / installing after. Simplest reliable path: sync then replace torch.
+  uv python install "${PYTHON_VERSION}"
+  uv sync --python "${PYTHON_VERSION}"
+  uv pip install --python "${UV_PROJECT_ENVIRONMENT}/bin/python" --reinstall torch
+else
+  echo "==> uv sync (pyproject.toml / uv.lock → .venv)"
+  if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader || true
+    echo "GPU detected — Linux torch will resolve from pytorch-cu124 (see pyproject.toml)."
+  else
+    echo "No GPU detected — on macOS/CPU hosts uv resolves default torch; on Linux x86_64 cu124 wheels are still selected by marker."
+  fi
+  uv python install "${PYTHON_VERSION}"
+  uv sync --python "${PYTHON_VERSION}"
+fi
+
+# Keep requirements.txt export in sync for readers who expect that file.
+if [[ -f "$ROOT/pyproject.toml" ]]; then
+  echo "==> Refreshing requirements.txt from the locked uv project"
+  uv export --no-dev --no-hashes --no-emit-project -o requirements.txt >/dev/null \
+    || uv export --no-hashes -o requirements.txt >/dev/null \
+    || true
+fi
 
 # shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
-export PATH="${VENV_DIR}/bin:${HOME}/.local/bin:${PATH}"
-PY="${VENV_DIR}/bin/python"
-
-echo "==> Detecting GPU / CUDA"
-HAS_GPU=0
-if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
-  HAS_GPU=1
-  nvidia-smi --query-gpu=name,driver_version --format=csv,noheader || true
-fi
-
-if [[ "${HAS_GPU}" -eq 1 && "${SKIP_CUDA_TORCH:-0}" != "1" ]]; then
-  echo "==> Installing CUDA PyTorch from ${TORCH_CUDA_INDEX}"
-  uv pip install --python "${PY}" torch --index-url "${TORCH_CUDA_INDEX}"
-else
-  echo "==> Installing CPU PyTorch (no GPU detected, or SKIP_CUDA_TORCH=1)"
-  uv pip install --python "${PY}" torch
-fi
-
-echo "==> Installing project requirements with uv"
-uv pip install --python "${PY}" -r requirements.txt
+source "${UV_PROJECT_ENVIRONMENT}/bin/activate"
+export PATH="${UV_PROJECT_ENVIRONMENT}/bin:${HOME}/.local/bin:${PATH}"
+PY="${UV_PROJECT_ENVIRONMENT}/bin/python"
 
 echo "==> Installing spaCy English model (en_core_web_sm)"
 "${PY}" -m spacy download en_core_web_sm
@@ -95,11 +105,15 @@ PY
 
 cat <<EOF
 
-Setup complete.
+Setup complete (uv sync).
 
 Activate before pipeline / API:
-  source ${VENV_DIR}/bin/activate
+  source ${UV_PROJECT_ENVIRONMENT}/bin/activate
   export PYTHONPATH="${ROOT}"
+
+Re-sync later after dependency changes:
+  uv sync
+  source .venv/bin/activate
 
 Run full pipeline:
   bash scripts/run_pipeline.sh

@@ -1,0 +1,56 @@
+[project]
+name = "scamshield-us"
+version = "0.1.0"
+description = "ScamShield US — open-source agentic RAG fraud / ID-theft assistant (EC2 + S3)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.6.0",
+  "python-multipart>=0.0.12",
+  "pandas>=2.2.0",
+  "numpy>=1.26.0",
+  "scikit-learn>=1.5.0",
+  "joblib>=1.4.0",
+  "torch>=2.2.0",
+  "transformers>=4.46.0",
+  "accelerate>=1.1.0",
+  "sentence-transformers>=3.3.0",
+  "faiss-cpu>=1.9.0",
+  "rank-bm25>=0.2.2",
+  "spacy>=3.8.0",
+  "beautifulsoup4>=4.12.0",
+  "lxml>=5.3.0",
+  "httpx>=0.27.0",
+  "boto3>=1.35.0",
+  "pyyaml>=6.0.2",
+  "tqdm>=4.66.0",
+  "matplotlib>=3.9.0",
+  "seaborn>=0.13.0",
+  "plotly>=5.24.0",
+  "wordcloud>=1.9.0",
+  "bitsandbytes>=0.44.0; sys_platform != 'darwin'",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[tool.uv]
+package = true
+
+# CUDA 12.4 wheels for Linux x86_64 GPU EC2 (g5). macOS / other platforms use PyPI torch.
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+]

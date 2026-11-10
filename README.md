@@ -14,7 +14,7 @@ Open-source agentic RAG assistant for consumer fraud / identity-theft education.
 | Agents | Deterministic supervisor pipeline in FastAPI |
 | API / UI | FastAPI + Angular TypeScript |
 | Storage | S3 for all data/models/indexes via **boto3 only** (EC2 caches ephemerally; no AWS CLI) |
-| Python env | **uv** → project `.venv` via `scripts/setup_venv.sh` (no shared `dl-venv` required) |
+| Python env | **uv sync** from `pyproject.toml` + `uv.lock` → `.venv` (`scripts/setup_venv.sh`) |
 
 ---
 
@@ -32,7 +32,7 @@ export AWS_SECRET_ACCESS_KEY="..."
 export AWS_SESSION_TOKEN="..."
 export AWS_DEFAULT_REGION="us-east-1"
 
-# 3) Install uv + create .venv + install all pipeline deps (CUDA torch if GPU present)
+# 3) uv sync from pyproject.toml / uv.lock → .venv (all Python deps)
 bash scripts/setup_venv.sh
 source .venv/bin/activate
 export PYTHONPATH="$PWD"
@@ -49,20 +49,23 @@ cd frontend && npm install && npm start
 # http://127.0.0.1:4200  (or SSH tunnel from your laptop)
 ```
 
-`setup_venv.sh` is the supported path for a blank machine. It installs `uv` if missing, creates `.venv` with Python 3.11, installs GPU/CPU PyTorch, then `uv pip install -r requirements.txt` and the spaCy model.
+`setup_venv.sh` installs `uv` if needed, then runs **`uv sync`** against `pyproject.toml` + `uv.lock` (and refreshes `requirements.txt` via `uv export`). Linux x86_64 resolves CUDA PyTorch (`cu124`) from the index declared in `pyproject.toml`.
 
 ---
 
 ## Layout
 
 ```
-backend/app/   FastAPI, NLP, RAG, investigation workflow
-frontend/      Angular UI (proxies /api → :8000)
-scripts/       setup_venv (uv) / seed / prepare / train / index / evaluate / viz / S3 helpers
-configs/       settings.yaml (includes s3_uri)
-data/          .gitkeep placeholders only (real data lives in S3)
-artifacts/     .gitkeep placeholders only (real models/indexes live in S3)
-.venv/         created locally by scripts/setup_venv.sh (gitignored)
+backend/app/      FastAPI, NLP, RAG, investigation workflow
+frontend/         Angular UI (proxies /api → :8000)
+scripts/          setup_venv (uv sync) / pipeline / S3 helpers
+configs/          settings.yaml (includes s3_uri)
+pyproject.toml    project metadata + dependency list (source of truth for uv)
+uv.lock           locked versions for reproducible uv sync
+requirements.txt  exported from uv.lock (convenience / readers)
+data/             .gitkeep placeholders only (real data lives in S3)
+artifacts/        .gitkeep placeholders only (real models/indexes live in S3)
+.venv/            created by uv sync (gitignored)
 ```
 
 ## S3 layout (durable store)
@@ -86,7 +89,7 @@ Run steps **in this order**. Steps 3–8 are also wrapped by `scripts/run_pipeli
 ```
 1. Clone / sync code on EC2
 2. AWS credentials (STS / env vars)
-3. Python env via uv           →  scripts/setup_venv.sh  (creates `.venv`)
+3. Python env via uv sync      →  scripts/setup_venv.sh  (`pyproject.toml` / `uv.lock` → `.venv`)
 4. Seed knowledge base         →  S3 data/knowledge + provenance
 5. Prepare baseline splits     →  S3 data/processed
 6. Train classifiers           →  S3 artifacts/models
@@ -151,7 +154,10 @@ export SCAMSHIELD_CACHE_DIR="/tmp/scamshield-s3-cache"
 
 ---
 
-## 3) Install Python deps with **uv** (fresh EC2)
+## 3) Install Python deps with **`uv sync`** (fresh EC2)
+
+Dependencies live in **`pyproject.toml`**. Locked versions are in **`uv.lock`**.  
+`requirements.txt` is an export of that lock (convenience only; do not edit it by hand).
 
 **Recommended (one command):**
 
@@ -164,29 +170,32 @@ export PYTHONPATH="$PWD"
 
 What that script does:
 
-1. Installs [`uv`](https://github.com/astral-sh/uv) into `~/.local/bin` if it is not already on `PATH`
-2. `uv python install 3.11` and `uv venv --python 3.11 .venv`
-3. Installs **CUDA PyTorch** (`cu124`) when `nvidia-smi` works; otherwise CPU PyTorch
-4. `uv pip install -r requirements.txt` (FastAPI, transformers, sentence-transformers, faiss, boto3, sklearn, wordcloud, …)
+1. Installs [`uv`](https://github.com/astral-sh/uv) into `~/.local/bin` if needed
+2. `uv python install 3.11`
+3. **`uv sync --python 3.11`** — creates `.venv` and installs from `pyproject.toml` / `uv.lock`
+4. `uv export … -o requirements.txt` — refreshes the exported requirements file
 5. `python -m spacy download en_core_web_sm`
 6. Smoke-imports torch / fastapi / faiss / boto3 / spacy
 
-**Manual equivalent** (same steps the script runs):
+**Manual equivalent:**
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 
 uv python install 3.11
-uv venv --python 3.11 .venv
+uv sync --python 3.11          # pyproject.toml + uv.lock → .venv
 source .venv/bin/activate
-
-# GPU EC2 (g5). On CPU-only hosts omit this line.
-uv pip install torch --index-url https://download.pytorch.org/whl/cu124
-
-uv pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 export PYTHONPATH="$PWD"
+```
+
+After changing dependencies in `pyproject.toml`:
+
+```bash
+uv lock
+uv sync
+uv export --no-dev --no-hashes --no-emit-project -o requirements.txt
 ```
 
 Activate in **every new shell** before pipeline / API:
@@ -196,7 +205,7 @@ source .venv/bin/activate
 export PYTHONPATH="$PWD"
 ```
 
-`scripts/run_pipeline.sh` and the uvicorn command below prefer `.venv/bin/python` automatically when that venv exists.
+`scripts/run_pipeline.sh` prefers `.venv/bin/python` when present.
 
 Quick S3 check:
 
@@ -204,7 +213,7 @@ Quick S3 check:
 python scripts/sync_s3.py --list
 ```
 
-CPU-only torch (no NVIDIA / force CPU wheels):
+Force CPU torch on Linux (reinstall PyPI torch after sync):
 
 ```bash
 SKIP_CUDA_TORCH=1 bash scripts/setup_venv.sh
@@ -341,7 +350,7 @@ python scripts/sync_s3.py --recursive --rm unwanted/prefix/
 
 - Full GPU training / Qwen inference is intended on EC2.
 - You can develop the Angular UI locally (step 10) while the API runs on EC2.
-- On a laptop: `bash scripts/setup_venv.sh` (uses CPU torch unless a GPU is present), export AWS credentials, then run scripts with `source .venv/bin/activate`. S3 remains the source of truth.
+- On a laptop: `bash scripts/setup_venv.sh` (runs `uv sync` from `pyproject.toml` / `uv.lock`), export AWS credentials, then `source .venv/bin/activate`. S3 remains the source of truth.
 
 ---
 
