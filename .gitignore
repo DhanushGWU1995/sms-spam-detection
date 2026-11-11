@@ -14,21 +14,21 @@ venv/
 .git_info.txt
 
 # Local/ephemeral data — durable copies live in S3
-artifacts/models/**
-!artifacts/models/.gitkeep
-artifacts/indexes/**
-!artifacts/indexes/.gitkeep
-data/raw/**
-!data/raw/.gitkeep
-data/processed/**
-!data/processed/.gitkeep
-data/knowledge/**
-!data/knowledge/.gitkeep
+Code/artifacts/models/**
+!Code/artifacts/models/.gitkeep
+Code/artifacts/indexes/**
+!Code/artifacts/indexes/.gitkeep
+Code/data/raw/**
+!Code/data/raw/.gitkeep
+Code/data/processed/**
+!Code/data/processed/.gitkeep
+Code/data/knowledge/**
+!Code/data/knowledge/.gitkeep
 
 # Frontend build/deps
-frontend/node_modules/
-frontend/dist/
-frontend/.angular/
+Code/frontend/node_modules/
+Code/frontend/dist/
+Code/frontend/.angular/
 
 # Model weights / large binaries (keep out of git)
 *.pt
@@ -41,3 +41,5 @@ frontend/.angular/
 
 .proposal_extract.txt
 tmp/
+scripts_make_pdfs.py
+docs/_rubric_extract.txt

@@ -38,9 +38,9 @@ Consumers receive phishing, government/banking impersonation, investment, and id
 
 | Approach | Macro-F1 | Accuracy | Weighted-F1 | Routed to Advanced |
 |---|---:|---:|---:|---:|
-| Traditional NLP | 0.626 | 0.975 | 0.975 | 0% |
-| Advanced NLP | 0.391 | 0.971 | 0.966 | 100% |
-| **Hybrid NLP** | **0.640** | **0.983** | **0.982** | **1.9%** |
+| Traditional NLP | 0.969 | 0.987 | 0.987 | 0% |
+| Advanced NLP | 0.961 | 0.987 | 0.987 | 100% |
+| **Hybrid NLP** | **0.983** | **0.992** | **0.992** | **1.1%** |
 
 Primary metric is **macro-F1** (rare scam subtypes matter). Accuracy ≈ micro-F1 for single-label classification.
 
@@ -51,7 +51,7 @@ Training also writes `classification_metrics.json`; the UI comparison panel uses
 - Backend API + Angular UI
 - S3-backed models, indexes, metrics, viz
 - README runbook + `scripts/setup_venv.sh` (`uv sync`)
-- Architecture deck: `docs/ScamShield_Architecture.pptx`
+- Architecture deck: `Final-Group-Presentation/ScamShield_Architecture.pptx`
 
 ## Limitations & ethics
 
@@ -64,7 +64,7 @@ Training also writes `classification_metrics.json`; the UI comparison panel uses
 
 ```bash
 git clone https://github.com/DhanushGWU1995/sms-spam-detection.git
-cd sms-spam-detection
+cd sms-spam-detection/Code
 # export AWS_* credentials
 bash scripts/setup_venv.sh
 source .venv/bin/activate && export PYTHONPATH="$PWD"
