@@ -27,6 +27,7 @@ Consumers receive phishing, government/banking impersonation, investment, and id
 - Traditional: domain TF-IDF + linguistic signals → LR / Linear SVM.
 - Advanced: DistilBERT fine-tuned on the project labels.
 - Hybrid: cascade Traditional → DistilBERT when Traditional confidence margin is weak (validation-chosen margin **0.05**).
+- Interpretability: **LIME** explanations after binary spam/ham prediction (see Results / dashboard).
 
 ### Retrieval & generation
 - MiniLM embeddings + FAISS dense index fused with BM25.
@@ -45,6 +46,15 @@ Consumers receive phishing, government/banking impersonation, investment, and id
 Primary metric is **macro-F1** (rare scam subtypes matter). Accuracy ≈ micro-F1 for single-label classification.
 
 Training also writes `classification_metrics.json`; the UI comparison panel uses `approach_reports.json`.
+
+### Word clouds and LIME (post-prediction)
+
+Dashboard visualizations are produced by `scripts/build_dashboard_viz.py` and shown in this order:
+
+1. **General corpus word clouds** — document-frequency terms in labeled spam vs ham training texts (no model explanation yet).
+2. **LIME word clouds after model prediction** — for each sampled message, a binary TF-IDF + logistic regression model predicts spam/ham first; LIME then estimates which tokens pushed that prediction. Aggregated local weights form the LIME spam/ham word clouds (plus example local bar charts).
+
+So LIME tokens are **derived after prediction**, not from raw frequency alone. The Angular UI places corpus clouds first and LIME clouds immediately afterward.
 
 ## System delivery
 
