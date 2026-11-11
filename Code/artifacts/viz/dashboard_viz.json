@@ -1,18 +1,536 @@
 {
   "available": true,
+  "storage": "s3",
   "wordclouds": {
     "spam_wordcloud": "/api/viz/files/spam_wordcloud.png",
-    "ham_wordcloud": "/api/viz/files/ham_wordcloud.png"
+    "ham_wordcloud": "/api/viz/files/ham_wordcloud.png",
+    "spam_lime_wordcloud": "/api/viz/files/spam_lime_wordcloud.png",
+    "spam_lime_example": "/api/viz/files/spam_lime_example.png",
+    "ham_lime_wordcloud": "/api/viz/files/ham_lime_wordcloud.png",
+    "ham_lime_example": "/api/viz/files/ham_lime_example.png"
+  },
+  "lime": {
+    "available": true,
+    "method": "LIME (LimeTextExplainer) over TF-IDF + LogisticRegression binary spam/ham",
+    "note": "Corpus word clouds show document-frequency prominence. LIME word clouds aggregate local feature weights from LIME explanations on held-in training samples, showing which tokens push predictions toward spam or ham.",
+    "n_spam_explained": 40,
+    "n_ham_explained": 40,
+    "num_features": 12,
+    "images": {
+      "spam_lime_wordcloud": "/api/viz/files/spam_lime_wordcloud.png",
+      "spam_lime_example": "/api/viz/files/spam_lime_example.png",
+      "ham_lime_wordcloud": "/api/viz/files/ham_lime_wordcloud.png",
+      "ham_lime_example": "/api/viz/files/ham_lime_example.png"
+    },
+    "top_features": {
+      "spam": [
+        {
+          "term": "txt",
+          "mean_weight": 0.15980582241648725,
+          "total_weight": 1.7578640465813598,
+          "explanations": 11
+        },
+        {
+          "term": "free",
+          "mean_weight": 0.113675331758459,
+          "total_weight": 1.250428649343049,
+          "explanations": 11
+        },
+        {
+          "term": "text",
+          "mean_weight": 0.08679106584515421,
+          "total_weight": 0.8679106584515421,
+          "explanations": 10
+        },
+        {
+          "term": "prize",
+          "mean_weight": 0.10944811486152023,
+          "total_weight": 0.6566886891691214,
+          "explanations": 6
+        },
+        {
+          "term": "mobile",
+          "mean_weight": 0.1140273175851609,
+          "total_weight": 0.5701365879258045,
+          "explanations": 5
+        },
+        {
+          "term": "service",
+          "mean_weight": 0.16579805486811586,
+          "total_weight": 0.4973941646043476,
+          "explanations": 3
+        },
+        {
+          "term": "uk",
+          "mean_weight": 0.15579811419196063,
+          "total_weight": 0.46739434257588186,
+          "explanations": 3
+        },
+        {
+          "term": "stop",
+          "mean_weight": 0.0829995338768875,
+          "total_weight": 0.41499766938443744,
+          "explanations": 5
+        },
+        {
+          "term": "reply",
+          "mean_weight": 0.09372778655963243,
+          "total_weight": 0.3749111462385297,
+          "explanations": 4
+        },
+        {
+          "term": "video",
+          "mean_weight": 0.08599478636442671,
+          "total_weight": 0.34397914545770686,
+          "explanations": 4
+        },
+        {
+          "term": "cash",
+          "mean_weight": 0.06768444922198487,
+          "total_weight": 0.33842224610992433,
+          "explanations": 5
+        },
+        {
+          "term": "150p",
+          "mean_weight": 0.07884178114305411,
+          "total_weight": 0.31536712457221644,
+          "explanations": 4
+        },
+        {
+          "term": "claim",
+          "mean_weight": 0.09944535821638924,
+          "total_weight": 0.2983360746491677,
+          "explanations": 3
+        },
+        {
+          "term": "88066",
+          "mean_weight": 0.280412667278777,
+          "total_weight": 0.280412667278777,
+          "explanations": 1
+        },
+        {
+          "term": "won",
+          "mean_weight": 0.0873637727685717,
+          "total_weight": 0.2620913183057151,
+          "explanations": 3
+        }
+      ],
+      "ham": [
+        {
+          "term": "ok",
+          "mean_weight": 0.11752385752698051,
+          "total_weight": 0.3525715725809415,
+          "explanations": 3
+        },
+        {
+          "term": "come",
+          "mean_weight": 0.10715515029377073,
+          "total_weight": 0.21431030058754147,
+          "explanations": 2
+        },
+        {
+          "term": "gt",
+          "mean_weight": 0.05869929359195123,
+          "total_weight": 0.1760978807758537,
+          "explanations": 3
+        },
+        {
+          "term": "lt",
+          "mean_weight": 0.05601825025393214,
+          "total_weight": 0.1680547507617964,
+          "explanations": 3
+        },
+        {
+          "term": "message",
+          "mean_weight": -0.16241949751675708,
+          "total_weight": -0.16241949751675708,
+          "explanations": 1
+        },
+        {
+          "term": "did",
+          "mean_weight": 0.07647588830995986,
+          "total_weight": 0.1529517766199197,
+          "explanations": 2
+        },
+        {
+          "term": "win",
+          "mean_weight": -0.1020430091060873,
+          "total_weight": -0.1020430091060873,
+          "explanations": 1
+        },
+        {
+          "term": "apply",
+          "mean_weight": -0.09909836377655316,
+          "total_weight": -0.09909836377655316,
+          "explanations": 1
+        },
+        {
+          "term": "going",
+          "mean_weight": 0.04678895726503234,
+          "total_weight": 0.09357791453006468,
+          "explanations": 2
+        },
+        {
+          "term": "chance",
+          "mean_weight": -0.09077082271631086,
+          "total_weight": -0.09077082271631086,
+          "explanations": 1
+        },
+        {
+          "term": "home",
+          "mean_weight": 0.04506451049295503,
+          "total_weight": 0.09012902098591007,
+          "explanations": 2
+        },
+        {
+          "term": "doing",
+          "mean_weight": 0.044938923237879944,
+          "total_weight": 0.08987784647575989,
+          "explanations": 2
+        },
+        {
+          "term": "said",
+          "mean_weight": 0.08688423540685701,
+          "total_weight": 0.08688423540685701,
+          "explanations": 1
+        },
+        {
+          "term": "12",
+          "mean_weight": -0.08051687763747213,
+          "total_weight": -0.08051687763747213,
+          "explanations": 1
+        },
+        {
+          "term": "comes",
+          "mean_weight": -0.07936877368784391,
+          "total_weight": -0.07936877368784391,
+          "explanations": 1
+        }
+      ]
+    },
+    "examples": [
+      {
+        "class": "spam",
+        "text_preview": "Babe: U want me dont u baby! Im nasty and have a thing 4 filthyguys. Fancy a rude time with a sexy bitch. How about we go slo n hard! Txt XXX SLO(4msgs)",
+        "prediction": "spam",
+        "features": [
+          {
+            "term": "Txt",
+            "weight": 0.286322750252485
+          },
+          {
+            "term": "sexy",
+            "weight": 0.07790235251296673
+          },
+          {
+            "term": "Fancy",
+            "weight": 0.06633714759918224
+          },
+          {
+            "term": "thing",
+            "weight": -0.051923265919784425
+          },
+          {
+            "term": "XXX",
+            "weight": 0.04687400353513803
+          },
+          {
+            "term": "want",
+            "weight": -0.04476547638967276
+          },
+          {
+            "term": "dont",
+            "weight": -0.03805556071785204
+          },
+          {
+            "term": "Im",
+            "weight": -0.03662042338240866
+          },
+          {
+            "term": "baby",
+            "weight": -0.024777685038589146
+          },
+          {
+            "term": "time",
+            "weight": -0.019527173855516847
+          }
+        ],
+        "image": "/api/viz/files/spam_lime_example.png"
+      },
+      {
+        "class": "ham",
+        "text_preview": "U know we watchin at lido?",
+        "prediction": "ham",
+        "features": [
+          {
+            "term": "know",
+            "weight": 0.0781568115831509
+          },
+          {
+            "term": "lido",
+            "weight": -0.021666109908500902
+          },
+          {
+            "term": "U",
+            "weight": 0.0017193972733459623
+          },
+          {
+            "term": "at",
+            "weight": 0.001644952653496269
+          },
+          {
+            "term": "watchin",
+            "weight": 0.0014200047074539445
+          },
+          {
+            "term": "we",
+            "weight": 0.0008899762255643963
+          }
+        ],
+        "image": "/api/viz/files/ham_lime_example.png"
+      }
+    ]
   },
   "attention_terms": {
-    "spam": [],
-    "ham": [],
-    "note": "Training CSV not present locally; attention terms will be empty until scripts/build_dashboard_viz.py is run where messages_train.csv exists."
+    "spam": [
+      {
+        "term": "call",
+        "docs": 215,
+        "share": 0.4182879377431907
+      },
+      {
+        "term": "free",
+        "docs": 125,
+        "share": 0.24319066147859922
+      },
+      {
+        "term": "now",
+        "docs": 125,
+        "share": 0.24319066147859922
+      },
+      {
+        "term": "txt",
+        "docs": 106,
+        "share": 0.20622568093385213
+      },
+      {
+        "term": "stop",
+        "docs": 79,
+        "share": 0.15369649805447472
+      },
+      {
+        "term": "text",
+        "docs": 78,
+        "share": 0.1517509727626459
+      },
+      {
+        "term": "mobile",
+        "docs": 72,
+        "share": 0.14007782101167315
+      },
+      {
+        "term": "reply",
+        "docs": 70,
+        "share": 0.13618677042801555
+      },
+      {
+        "term": "claim",
+        "docs": 67,
+        "share": 0.1303501945525292
+      },
+      {
+        "term": "prize",
+        "docs": 56,
+        "share": 0.10894941634241245
+      },
+      {
+        "term": "only",
+        "docs": 52,
+        "share": 0.10116731517509728
+      },
+      {
+        "term": "new",
+        "docs": 49,
+        "share": 0.09533073929961089
+      },
+      {
+        "term": "send",
+        "docs": 46,
+        "share": 0.08949416342412451
+      },
+      {
+        "term": "msg",
+        "docs": 45,
+        "share": 0.08754863813229571
+      },
+      {
+        "term": "win",
+        "docs": 44,
+        "share": 0.08560311284046693
+      },
+      {
+        "term": "won",
+        "docs": 41,
+        "share": 0.07976653696498054
+      },
+      {
+        "term": "urgent",
+        "docs": 41,
+        "share": 0.07976653696498054
+      },
+      {
+        "term": "service",
+        "docs": 40,
+        "share": 0.07782101167315175
+      },
+      {
+        "term": "cash",
+        "docs": 40,
+        "share": 0.07782101167315175
+      },
+      {
+        "term": "phone",
+        "docs": 39,
+        "share": 0.07587548638132295
+      }
+    ],
+    "ham": [
+      {
+        "term": "but",
+        "docs": 305,
+        "share": 0.08439402324294411
+      },
+      {
+        "term": "i'm",
+        "docs": 282,
+        "share": 0.07802988378527947
+      },
+      {
+        "term": "now",
+        "docs": 228,
+        "share": 0.0630879911455451
+      },
+      {
+        "term": "how",
+        "docs": 209,
+        "share": 0.057830658550083014
+      },
+      {
+        "term": "when",
+        "docs": 189,
+        "share": 0.052296624239070284
+      },
+      {
+        "term": "what",
+        "docs": 187,
+        "share": 0.05174322080796901
+      },
+      {
+        "term": "all",
+        "docs": 183,
+        "share": 0.05063641394576646
+      },
+      {
+        "term": "then",
+        "docs": 174,
+        "share": 0.04814609850581074
+      },
+      {
+        "term": "know",
+        "docs": 174,
+        "share": 0.04814609850581074
+      },
+      {
+        "term": "like",
+        "docs": 162,
+        "share": 0.0448256779192031
+      },
+      {
+        "term": "good",
+        "docs": 162,
+        "share": 0.0448256779192031
+      },
+      {
+        "term": "out",
+        "docs": 160,
+        "share": 0.04427227448810182
+      },
+      {
+        "term": "come",
+        "docs": 160,
+        "share": 0.04427227448810182
+      },
+      {
+        "term": "day",
+        "docs": 140,
+        "share": 0.0387382401770891
+      },
+      {
+        "term": "time",
+        "docs": 138,
+        "share": 0.03818483674598783
+      },
+      {
+        "term": "going",
+        "docs": 137,
+        "share": 0.03790813503043719
+      },
+      {
+        "term": "call",
+        "docs": 136,
+        "share": 0.03763143331488655
+      },
+      {
+        "term": "there",
+        "docs": 131,
+        "share": 0.03624792473713337
+      },
+      {
+        "term": "want",
+        "docs": 129,
+        "share": 0.035694521306032095
+      },
+      {
+        "term": "need",
+        "docs": 128,
+        "share": 0.03541781959048146
+      }
+    ],
+    "note": "Top document-frequency terms in spam vs ham training messages (corpus frequency view; pair with LIME for local model explanations)."
   },
-  "label_mix": [],
+  "label_mix": [
+    {
+      "label": "legitimate",
+      "count": 3614
+    },
+    {
+      "label": "other_uncertain",
+      "count": 365
+    },
+    {
+      "label": "phishing_spoofing",
+      "count": 100
+    },
+    {
+      "label": "government_impersonation",
+      "count": 36
+    },
+    {
+      "label": "identity_theft_attempt",
+      "count": 9
+    },
+    {
+      "label": "investment_scam",
+      "count": 2
+    },
+    {
+      "label": "banking_impersonation",
+      "count": 2
+    }
+  ],
   "binary_mix": {
-    "spam": 0,
-    "ham": 0
+    "spam": 514,
+    "ham": 3614
   },
   "geo": {
     "available": true,
