@@ -31,6 +31,7 @@ dependencies = [
   "seaborn>=0.13.0",
   "plotly>=5.24.0",
   "wordcloud>=1.9.0",
+  "lime>=0.2.0.1",
   "bitsandbytes>=0.44.0; sys_platform != 'darwin'",
 ]
 

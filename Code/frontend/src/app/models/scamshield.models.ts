@@ -101,13 +101,53 @@ export interface AttentionTerm {
   share: number;
 }
 
+export interface LimeFeature {
+  term: string;
+  mean_weight?: number;
+  total_weight?: number;
+  explanations?: number;
+  weight?: number;
+}
+
+export interface LimeExample {
+  class: string;
+  text_preview?: string;
+  prediction?: string;
+  features?: LimeFeature[];
+  image?: string;
+}
+
+export interface LimeViz {
+  available?: boolean;
+  method?: string;
+  note?: string;
+  n_spam_explained?: number;
+  n_ham_explained?: number;
+  images?: {
+    spam_lime_wordcloud?: string;
+    ham_lime_wordcloud?: string;
+    spam_lime_example?: string;
+    ham_lime_example?: string;
+  };
+  top_features?: {
+    spam?: LimeFeature[];
+    ham?: LimeFeature[];
+  };
+  examples?: LimeExample[];
+}
+
 export interface DashboardVizResponse {
   available: boolean;
   note?: string;
   wordclouds?: {
     spam_wordcloud?: string;
     ham_wordcloud?: string;
+    spam_lime_wordcloud?: string;
+    ham_lime_wordcloud?: string;
+    spam_lime_example?: string;
+    ham_lime_example?: string;
   };
+  lime?: LimeViz;
   attention_terms?: {
     spam?: AttentionTerm[];
     ham?: AttentionTerm[];

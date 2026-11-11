@@ -251,6 +251,20 @@ a {
   margin-top: 0;
 }
 
+.viz-subhead {
+  margin: 1.1rem 0 0.55rem;
+  font-size: 1rem;
+  color: #cfe0d6;
+}
+
+.lime-caption {
+  margin: 0.75rem 0 0.35rem;
+}
+
+.lime-example {
+  background: #0c1210;
+}
+
 .table-wrap {
   overflow-x: auto;
   margin: 0.8rem 0 1rem;

@@ -12,6 +12,7 @@ import {
   InvestigateResponse,
   KnowledgeSourcesResponse,
   LabelMetricRow,
+  LimeFeature,
 } from './models/scamshield.models';
 import { ScamshieldApiService } from './services/scamshield-api.service';
 
@@ -291,6 +292,54 @@ export class AppComponent implements OnInit {
     return this.dashboardViz?.wordclouds?.ham_wordcloud ?? null;
   }
 
+  spamLimeCloudSrc(): string | null {
+    return (
+      this.dashboardViz?.lime?.images?.spam_lime_wordcloud ??
+      this.dashboardViz?.wordclouds?.spam_lime_wordcloud ??
+      null
+    );
+  }
+
+  hamLimeCloudSrc(): string | null {
+    return (
+      this.dashboardViz?.lime?.images?.ham_lime_wordcloud ??
+      this.dashboardViz?.wordclouds?.ham_lime_wordcloud ??
+      null
+    );
+  }
+
+  spamLimeExampleSrc(): string | null {
+    return (
+      this.dashboardViz?.lime?.images?.spam_lime_example ??
+      this.dashboardViz?.wordclouds?.spam_lime_example ??
+      null
+    );
+  }
+
+  hamLimeExampleSrc(): string | null {
+    return (
+      this.dashboardViz?.lime?.images?.ham_lime_example ??
+      this.dashboardViz?.wordclouds?.ham_lime_example ??
+      null
+    );
+  }
+
+  limeAvailable(): boolean {
+    return Boolean(this.dashboardViz?.lime?.available);
+  }
+
+  limeNote(): string {
+    return this.dashboardViz?.lime?.note ?? '';
+  }
+
+  spamLimeFeatures(): LimeFeature[] {
+    return this.dashboardViz?.lime?.top_features?.spam ?? [];
+  }
+
+  hamLimeFeatures(): LimeFeature[] {
+    return this.dashboardViz?.lime?.top_features?.ham ?? [];
+  }
+
   spamTerms(): AttentionTerm[] {
     return this.dashboardViz?.attention_terms?.spam ?? [];
   }
@@ -302,6 +351,19 @@ export class AppComponent implements OnInit {
   termBarWidth(term: AttentionTerm, pool: AttentionTerm[]): number {
     const max = Math.max(...pool.map((item) => item.share), 0.0001);
     return Math.max(8, (term.share / max) * 100);
+  }
+
+  limeBarWidth(feature: LimeFeature, pool: LimeFeature[]): number {
+    const weights = pool.map((item) => Math.abs(item.mean_weight ?? item.weight ?? 0));
+    const max = Math.max(...weights, 0.0001);
+    const value = Math.abs(feature.mean_weight ?? feature.weight ?? 0);
+    return Math.max(8, (value / max) * 100);
+  }
+
+  limeWeightLabel(feature: LimeFeature): string {
+    const value = feature.mean_weight ?? feature.weight ?? 0;
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(3)}`;
   }
 
   private readError(err: unknown): string {

@@ -42,7 +42,7 @@ Order inside the pipeline:
 | 3 | `scripts/train_classifiers.py` | Train Traditional + DistilBERT → S3 |
 | 4 | `scripts/build_rag_index.py` | Build BM25 + FAISS index → S3 |
 | 5 | `scripts/evaluate_approaches.py` | Compare approaches on test → S3 metrics |
-| 6 | `scripts/build_dashboard_viz.py` | Wordclouds / dashboard JSON → S3 |
+| 6 | `scripts/build_dashboard_viz.py` | Wordclouds + LIME explanations / dashboard JSON → S3 |
 
 If S3 already has models/indexes/metrics, you can skip step 3 and go to the API.
 
@@ -75,7 +75,7 @@ npm start
 | `scripts/train_classifiers.py` | sklearn + DistilBERT training |
 | `scripts/build_rag_index.py` | Hybrid retrieval index |
 | `scripts/evaluate_approaches.py` | Traditional / Advanced / Hybrid eval |
-| `scripts/build_dashboard_viz.py` | Dashboard visualizations |
+| `scripts/build_dashboard_viz.py` | Dashboard visualizations (corpus wordclouds + LIME) |
 | `backend/app/` | FastAPI API, classifiers, RAG, agent workflow |
 | `frontend/` | Angular TypeScript UI |
 | `configs/settings.yaml` | Models, paths, S3 URI |

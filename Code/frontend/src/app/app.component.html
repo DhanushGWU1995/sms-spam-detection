@@ -379,7 +379,7 @@
   </div>
 
   <div class="panel viz-panel">
-    <h2>Spam / ham attention</h2>
+    <h2>Spam / ham word clouds + LIME</h2>
     @if (!dashboardViz) {
       <p class="muted">Loading visualizations…</p>
     } @else if (!dashboardViz.available) {
@@ -394,6 +394,7 @@
       }
       <p class="muted">{{ dashboardViz.attention_terms?.note }}</p>
 
+      <h3 class="viz-subhead">Corpus frequency word clouds</h3>
       <div class="cloud-grid">
         <article class="card cloud-card">
           <h3>Spam word cloud</h3>
@@ -435,6 +436,64 @@
           }
         </article>
       </div>
+
+      <h3 class="viz-subhead">LIME explanations (local feature importance)</h3>
+      @if (!limeAvailable()) {
+        <p class="muted">
+          {{ limeNote() || 'LIME artifacts not built yet. Run: python scripts/build_dashboard_viz.py' }}
+        </p>
+      } @else {
+        <p class="muted">{{ limeNote() }}</p>
+        <div class="cloud-grid">
+          <article class="card cloud-card">
+            <h3>Spam LIME word cloud</h3>
+            @if (spamLimeCloudSrc(); as src) {
+              <img [src]="src" alt="Spam LIME word cloud" class="cloud-img" />
+            } @else {
+              <p class="muted">Spam LIME word cloud not available yet.</p>
+            }
+            @if (spamLimeExampleSrc(); as src) {
+              <p class="muted lime-caption">Example local explanation</p>
+              <img [src]="src" alt="Spam LIME example explanation" class="cloud-img lime-example" />
+            }
+            @if (spamLimeFeatures().length) {
+              <div class="term-list">
+                @for (feature of spamLimeFeatures(); track feature.term) {
+                  <div class="term-row">
+                    <span class="term-name">{{ feature.term }}</span>
+                    <span class="term-bar spam" [style.width.%]="limeBarWidth(feature, spamLimeFeatures())"></span>
+                    <span class="term-meta">{{ limeWeightLabel(feature) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+
+          <article class="card cloud-card">
+            <h3>Ham LIME word cloud</h3>
+            @if (hamLimeCloudSrc(); as src) {
+              <img [src]="src" alt="Ham LIME word cloud" class="cloud-img" />
+            } @else {
+              <p class="muted">Ham LIME word cloud not available yet.</p>
+            }
+            @if (hamLimeExampleSrc(); as src) {
+              <p class="muted lime-caption">Example local explanation</p>
+              <img [src]="src" alt="Ham LIME example explanation" class="cloud-img lime-example" />
+            }
+            @if (hamLimeFeatures().length) {
+              <div class="term-list">
+                @for (feature of hamLimeFeatures(); track feature.term) {
+                  <div class="term-row">
+                    <span class="term-name">{{ feature.term }}</span>
+                    <span class="term-bar ham" [style.width.%]="limeBarWidth(feature, hamLimeFeatures())"></span>
+                    <span class="term-meta">{{ limeWeightLabel(feature) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+        </div>
+      }
     }
   </div>
 </section>
