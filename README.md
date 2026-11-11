@@ -14,6 +14,13 @@ Open-source agentic RAG assistant for consumer fraud / identity-theft education.
 | API / UI | FastAPI + Angular TypeScript |
 | Storage | S3 via **boto3 only** |
 | Python env | **uv sync** from `Code/pyproject.toml` + `Code/uv.lock` |
+| Interpretability | LIME explanations shown after corpus word clouds |
+
+---
+
+## Team
+
+Alex and Dhanush
 
 ---
 
@@ -92,7 +99,7 @@ Pipeline order inside `scripts/run_pipeline.sh`:
 4. `train_classifiers.py` — Traditional + DistilBERT  
 5. `build_rag_index.py` — BM25 + FAISS  
 6. `evaluate_approaches.py` — Traditional / Advanced / Hybrid metrics  
-7. `build_dashboard_viz.py` — wordclouds / dashboard JSON  
+7. `build_dashboard_viz.py` — wordclouds + LIME / dashboard JSON  
 
 ---
 
