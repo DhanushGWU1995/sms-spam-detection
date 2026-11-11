@@ -16,12 +16,28 @@ def load_llm():
 
     settings = get_settings()
     name = settings.llm_model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
     tokenizer = AutoTokenizer.from_pretrained(name)
     # Prefer fp16 on GPU; fall back to float32 on CPU. No paid API.
-    dtype = torch.float16 if device.type == "cuda" else torch.float32
-    model = AutoModelForCausalLM.from_pretrained(name, torch_dtype=dtype)
-    model.to(device)
+    dtype = torch.float16 if use_cuda else torch.float32
+    # Newer torch/transformers can materialize meta tensors when using the
+    # default low-CPU path; calling `.to(device)` then raises:
+    # "Cannot copy out of meta tensor; no data!".
+    # Load straight onto the target device (or disable meta init on CPU).
+    if use_cuda:
+        model = AutoModelForCausalLM.from_pretrained(
+            name,
+            torch_dtype=dtype,
+            device_map={"": 0},
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            name,
+            torch_dtype=dtype,
+            low_cpu_mem_usage=False,
+        )
+        model.to(device)
     model.eval()
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
